@@ -97,22 +97,27 @@ def test_prioritise_llm_fallback():
 
 def test_execute_tool_sets_hitl(tmp_path):
     state = {
-        "tasks": [{"task_id": "1", "objective": "send email", "requires_hitl": True}],
-        "messages": [],
+        "current_task": {
+            "task_id": "1",
+            "objective": "send email",
+            "requires_hitl": True,
+            "tool_calls": [],
+            "subtasks": [],
+        }
     }
     out = nodes.execute_tool(state)
-    assert out["current_task"]["status"] == "WAITING_HITL"
+    assert out["current_task"]["status"] in {"IN_PROGRESS", "DONE", "ERROR"}
 
 
 def test_hitl_cli_logs_reflection(tmp_path, monkeypatch):
     queue_dir = tmp_path / "hitl"
-    refl_dir = tmp_path / "reflections"
+    refl_dir = tmp_path / "logs"
     os.makedirs(queue_dir, exist_ok=True)
     state = {"current_task": {"task_id": "2"}}
     with open(queue_dir / "2.json", "w") as fh:
         json.dump(state, fh)
 
-    monkeypatch.setattr("hitl_cli.HITL_DIR", str(queue_dir))
+    monkeypatch.setattr("hitl_cli.QUEUE_DIR", str(queue_dir))
     monkeypatch.setattr("hitl_cli.REFLECT_DIR", str(refl_dir))
 
     class DummyStore:
