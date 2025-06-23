@@ -77,6 +77,17 @@ Site-rendered docs: <https://adrianwedd.github.io/personal-agentic-operating-sys
 | `make graph`| Render Mermaid PNG of current LangGraph |
 | `make docserve`| Hot-reload MkDocs at <http://127.0.0.1:8000> |
 
+## 🔄 Meta-agent Schedule
+
+Run `scripts/run_meta_agent.py` daily so the system can refine
+`guidelines.txt` from reflection logs. Add a cron entry:
+
+```cron
+0 3 * * * /usr/bin/python /path/to/scripts/run_meta_agent.py >> ~/meta.log 2>&1
+```
+
+Systemd users can create a timer that calls the same script once per day.
+
 ---
 
 ## 🏗 Contributing

@@ -83,3 +83,7 @@ Run `make pull-models` before going offline. If using a mirror registry, update 
 
 ## 9. Test Dataset Stubs
 Place small fixture emails and documents under `tests/fixtures/` for unit tests.
+
+## 10. Scheduling the Meta-Agent
+Run `python scripts/run_meta_agent.py` daily to refresh `guidelines.txt` from reflection logs.
+Add a cron entry or systemd timer that invokes the script once per day.
