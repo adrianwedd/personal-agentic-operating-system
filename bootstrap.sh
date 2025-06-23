@@ -78,6 +78,14 @@ else
     fi
 fi
 
+# 👷 Copy dev ClickHouse config
+echo "\ud83d\udd27  Applying dev-friendly ClickHouse config..."
+mkdir -p .clickhouse
+cp docker/clickhouse/config.xml .clickhouse/config.xml
+echo "\u26a0\ufe0f  Langfuse v3+ uses ClickHouse and requires manual DB config."
+echo "\u2139\ufe0f  ClickHouse config applied: .clickhouse/config.xml"
+echo "   For pruning logs: bash scripts/prune_clickhouse_system_tables.sh"
+
 # 6️⃣  ARM warning for Langfuse < 2.58
 if [[ "$ARCH" == "arm64" ]]; then
     dim "ℹ️  ARM Mac detected – using multi-arch Langfuse ≥ 2.58."
