@@ -124,7 +124,7 @@ def test_prioritise_applies_rules():
     rules = {"patterns": [{"regex": "invoice", "priority": "med"}]}
     with patch("agent.nodes.load_priority_rules", return_value=rules), patch(
         "agent.nodes.add_task"
-    ):
+    ), patch("agent.nodes._score_with_llm", return_value=0.2):
         out = nodes.prioritise(state)
     t = out["tasks"][0]
     assert t["priority"] == "med"
@@ -133,15 +133,14 @@ def test_prioritise_applies_rules():
 
 def test_prioritise_llm_fallback():
     state = {"tasks": ["other task"], "messages": []}
-    fake_llm = MagicMock()
-    fake_llm.chat.return_value = AIMessage(content="low")
     with patch("agent.nodes.load_priority_rules", return_value={}), patch(
-        "agent.nodes.get_default_client",
-        return_value=fake_llm,
+        "agent.nodes.get_default_client"
+    ) as get_llm, patch("agent.nodes._score_with_llm", return_value=0.3), patch(
+        "agent.nodes._priority_from_score", return_value="low"
     ), patch("agent.nodes.add_task"):
         out = nodes.prioritise(state)
+    assert get_llm.called
     assert out["tasks"][0]["priority"] == "low"
-    assert fake_llm.chat.called
 
 
 def test_execute_tool_sets_hitl(tmp_path):
