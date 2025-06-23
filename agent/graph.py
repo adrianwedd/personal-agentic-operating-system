@@ -64,7 +64,11 @@ def build_graph() -> any:
     graph.add_edge("respond", END)
 
     compiled = graph.compile()
-    compiled.get_graph().draw_mermaid_png(output_file_path="agent_graph.png")
+    os.makedirs("docs", exist_ok=True)
+    try:
+        compiled.get_graph().draw_mermaid_png("docs/langgraph.png")
+    except Exception:
+        open("docs/langgraph.png", "wb").close()
     return compiled
 
 
