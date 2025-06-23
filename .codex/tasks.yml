@@ -138,18 +138,74 @@ tasks:
       - QA sign-off checklist uploaded to repository `docs/QA/v0.4.0-rc2.md`.
       - GitHub release draft created with artefacts.
 
+  - id: INF-1
+    title: "Fix Langfuse env & platform"
+    ⏳: 0.2h 🔥 ⚙️
+    description: |
+      • Change `LANGFUSE_DATABASE_URL` → `DATABASE_URL` in docker-compose.yml.
+      • Add `platform: linux/arm64/v8` under langfuse service for Apple Silicon users.
+      • Update DEV_ENV.md with note about .env and platform flag.
+    acceptance_criteria:
+      - `docker compose up -d` on M-series Mac shows all containers healthy.
+
   - id: DOC-1
-    title: "Replace README with polished badge-rich version"
+    title: "Replace README with badge-rich, quick-start version"
     ⏳: 0.5h 📚
+    description: |
+      • Use the diff supplied by the assistant (badges, architecture Mermaid, quick-start, Make targets).
+      • Include arm64 vs amd64 note under “Quick-start”.
+    acceptance_criteria:
+      - README renders cleanly on GitHub. All links work.
+
   - id: DOC-2
-    title: "Bootstrap MkDocs with Material theme"
-    ⏳: 1h 📚 ⚙️
+    title: "Bootstrap MkDocs-Material site"
+    ⏳: 1h ⚙️ 📚
     depends_on: [DOC-1]
+    description: |
+      • Add `docs/` folder with index.md, quickstart.md, architecture/, guides/, _assets/logo.svg.
+      • `mkdocs.yml` matches assistant template.
+      • Add Makefile targets `docserve` & `docbuild`.
+    acceptance_criteria:
+      - `make docserve` opens docs at http://127.0.0.1:8000.
+      - `mkdocs build --strict` exits 0 in CI.
+
   - id: DOC-3
-    title: "Add docserve/docbuild targets & GH Pages deployment"
-    ⏳: 1h 📚 ⚙️
+    title: "Auto-generate LangGraph diagram into docs"
+    ⏳: 0.5h ⚙️
     depends_on: [DOC-2]
+    description: |
+      • Add Python snippet to `make graph` that writes PNG to `docs/architecture/langgraph_flow.png`.
+      • Reference that image in `architecture/langgraph_flow.md`.
+    acceptance_criteria:
+      - Running `make graph` after any node change updates the PNG.
+      - PNG visible in docs site.
+
   - id: DOC-4
-    title: "Write Quick-start and Architecture overview docs"
-    ⏳: 1.5h 📚
+    title: "GitHub Pages deploy via mike"
+    ⏳: 1h ⚙️
     depends_on: [DOC-2]
+    description: |
+      • Add `.github/workflows/docs.yml` using `mike deploy` on every tag push.
+      • Set default alias `latest`, version switcher enabled.
+    acceptance_criteria:
+      - Tagging `v0.4.0-rc3` publishes docs at <https://…/latest>. Badge in README turns green.
+
+  - id: DOC-5
+    title: "Write Quick-start & Architecture overview pages"
+    ⏳: 1h 📚
+    depends_on: [DOC-2]
+    description: |
+      • quickstart.md: copy README quick-start, add screenshots of Langfuse UI & Qdrant dashboard.
+      • architecture/overview.md: system diagram + bullets for each container.
+    acceptance_criteria:
+      - Both pages present, lint-free (`mkdocs build --strict`).
+
+  - id: DOC-6
+    title: "Populate CHANGELOG.md & bump version"
+    ⏳: 0.3h 📚
+    description: |
+      • Summarise Δ-002 (Hardening & CI) and Δ-003 (Wave-A Retrieval).
+      • Set `pyproject.toml` version = "0.4.0-rc3".
+    acceptance_criteria:
+      - CHANGELOG appears under docs nav “Changelog”.
+      - Version shows in footer of docs.

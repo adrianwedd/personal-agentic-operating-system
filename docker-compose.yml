@@ -18,8 +18,9 @@ services:
     image: ghcr.io/langfuse/langfuse:2.3.1  # ← pin
     container_name: langfuse
     ports: ["3000"]                       # internal only
+    platform: linux/arm64/v8
     environment:
-      LANGFUSE_DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
       # keys injected via .env
     networks: ["agentnet"]
   postgres:
