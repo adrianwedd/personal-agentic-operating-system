@@ -16,3 +16,7 @@ python src/minimal_agent.py "Summarise my inbox"
 ```
 
 The first run downloads an Ollama model (~3 GB). Subsequent runs are fast.
+
+## Switching LLM providers
+
+Set `LLM_BACKEND` in your `.env` file to `openai`, `gemini`, or `deepseek` if you want to use a cloud provider instead of the default Ollama instance. Make sure to also set the matching API key (`OPENAI_API_KEY`, `GEMINI_API_KEY`, or `DEEPSEEK_API_KEY`).

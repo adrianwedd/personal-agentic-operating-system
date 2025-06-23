@@ -6,7 +6,7 @@ import os
 from typing import List, TypedDict, Dict
 
 from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
-from langchain_community.chat_models import ChatOllama
+from agent.llm_providers import get_default_client
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_core.documents import Document
 from langchain_community.vectorstores import Qdrant
@@ -50,12 +50,12 @@ def retrieve_context(state: AgentState) -> Dict[str, List[str]]:
 
 def answer_step(state: AgentState) -> Dict[str, List[BaseMessage]]:
     """Generate a final answer from context docs and user message."""
-    llm = ChatOllama()
+    llm = get_default_client()
     prompt = state["messages"][-1].content
     if state.get("context_docs"):
         context = "\n".join(state["context_docs"])
         prompt = f"Context:\n{context}\n---\n{prompt}"
-    ai: AIMessage = llm.invoke([HumanMessage(content=prompt)])
+    ai: AIMessage = llm.chat([HumanMessage(content=prompt)])
     return {"messages": state["messages"] + [ai]}
 
 

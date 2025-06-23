@@ -21,7 +21,7 @@ def test_retrieve_context():
 def test_answer_step():
     state = {"messages": [HumanMessage(content="hi")], "context_docs": ["ctx"]}
     fake_llm = MagicMock()
-    fake_llm.invoke.return_value = AIMessage(content="pong")
-    with patch("rag_agent.ChatOllama", return_value=fake_llm):
+    fake_llm.chat.return_value = AIMessage(content="pong")
+    with patch("rag_agent.get_default_client", return_value=fake_llm):
         out = rag_agent.answer_step(state)
     assert out["messages"][-1].content == "pong"

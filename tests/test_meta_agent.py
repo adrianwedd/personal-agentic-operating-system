@@ -10,9 +10,9 @@ from langchain_core.messages import AIMessage
 
 def test_meta_agent_updates_guidelines(tmp_path):
     fake_llm = MagicMock()
-    fake_llm.invoke.return_value = AIMessage(content="Be nice")
+    fake_llm.chat.return_value = AIMessage(content="Be nice")
     with patch("agent.meta_agent._load_reflections", return_value=["foo"]), patch(
-        "agent.meta_agent.ChatOllama", return_value=fake_llm
+        "agent.meta_agent.get_default_client", return_value=fake_llm
     ):
         meta.run_meta_agent()
 

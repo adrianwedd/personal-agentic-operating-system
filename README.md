@@ -16,6 +16,7 @@
 | Capability | Detail |
 |------------|--------|
 | **On-prem, private** | All services run in Docker on your machine. No external API calls required. |
+| **Pluggable LLM backends** | Switch between Ollama, OpenAI, Gemini or DeepSeek via `LLM_BACKEND` env var. |
 | **Task-centric LangGraph** | Planner → Prioritise → PKG + Vector RAG → Tool execution → HITL checkpoint. |
 | **Hybrid Retrieval** | Step-1 Neo4j entity lookup, Step-2 Qdrant metadata-filtered vector search. |
 | **Self-improvement loop** | Reflection docs → meta-agent → updated guidelines injected at runtime. |

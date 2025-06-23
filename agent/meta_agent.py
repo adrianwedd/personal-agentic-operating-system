@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from langchain_community.chat_models import ChatOllama
+from agent.llm_providers import get_default_client
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import Qdrant
@@ -28,8 +28,8 @@ def run_meta_agent() -> str | None:
     texts = _load_reflections()
     if not texts:
         return None
-    llm = ChatOllama()
-    ai: AIMessage = llm.invoke([HumanMessage(content="\n".join(texts))])
+    llm = get_default_client()
+    ai: AIMessage = llm.chat([HumanMessage(content="\n".join(texts))])
     with open(GUIDELINES_FILE, "w") as fh:
         fh.write(ai.content.strip())
     return ai.content.strip()

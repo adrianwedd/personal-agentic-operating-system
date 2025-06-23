@@ -14,13 +14,13 @@ import json
 def test_plan_step_uses_pkg():
     state = {"messages": [HumanMessage(content="plan this")]}
     fake_llm = MagicMock()
-    fake_llm.invoke.return_value = AIMessage(content="- step1\n- step2")
+    fake_llm.chat.return_value = AIMessage(content="- step1\n- step2")
     fake_driver = MagicMock()
     fake_session = fake_driver.session.return_value.__enter__.return_value
     fake_session.run.return_value = [{"entity": "ProjectX"}]
     import importlib
     rc = importlib.import_module("agent.retrieve_context")
-    with patch("agent.nodes.ChatOllama", return_value=fake_llm), patch.object(rc.GraphDatabase, "driver", return_value=fake_driver):
+    with patch("agent.nodes.get_default_client", return_value=fake_llm), patch.object(rc.GraphDatabase, "driver", return_value=fake_driver):
         out = nodes.plan_step(state)
     assert out["tasks"] == ["step1", "step2"]
     assert fake_session.run.called
@@ -33,7 +33,7 @@ def test_plan_step_includes_email_metadata():
         def __init__(self):
             self.last_input = None
 
-        def invoke(self, msgs, *args, **kwargs):
+        def chat(self, msgs, *args, **kwargs):
             self.last_input = "\n".join(m.content for m in msgs)
             return AIMessage(content="- draft_email(to='jane.d@example.com')")
 
@@ -46,7 +46,7 @@ def test_plan_step_includes_email_metadata():
     llm = FakeLLM()
     import importlib
     rc = importlib.import_module("agent.retrieve_context")
-    with patch("agent.nodes.ChatOllama", return_value=llm), patch.object(rc.GraphDatabase, "driver", return_value=fake_driver):
+    with patch("agent.nodes.get_default_client", return_value=llm), patch.object(rc.GraphDatabase, "driver", return_value=fake_driver):
         out = nodes.plan_step(state)
 
     assert "jane.d@example.com" in llm.last_input
@@ -134,14 +134,14 @@ def test_prioritise_applies_rules():
 def test_prioritise_llm_fallback():
     state = {"tasks": ["other task"], "messages": []}
     fake_llm = MagicMock()
-    fake_llm.invoke.return_value = AIMessage(content="low")
+    fake_llm.chat.return_value = AIMessage(content="low")
     with patch("agent.nodes.load_priority_rules", return_value={}), patch(
-        "agent.nodes.ChatOllama",
+        "agent.nodes.get_default_client",
         return_value=fake_llm,
     ), patch("agent.nodes.add_task"):
         out = nodes.prioritise(state)
     assert out["tasks"][0]["priority"] == "low"
-    assert fake_llm.invoke.called
+    assert fake_llm.chat.called
 
 
 def test_execute_tool_sets_hitl(tmp_path):

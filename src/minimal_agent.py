@@ -1,6 +1,6 @@
 from typing import TypedDict, List
 
-from langchain_community.chat_models import ChatOllama
+from agent.llm_providers import get_default_client
 from langgraph.graph import StateGraph, END
 from langchain_core.messages import HumanMessage, AIMessage
 from langfuse import Langfuse
@@ -15,9 +15,9 @@ class AgentState(TypedDict):
 
 def ollama_step(state: AgentState) -> dict:
     """Call the local model and return an updated messages list."""
-    llm = ChatOllama()
+    llm = get_default_client()
     last = state["messages"][-1]
-    response = llm.invoke([last])
+    response = llm.chat([last])
     return {"messages": state["messages"] + [response]}
 
 
