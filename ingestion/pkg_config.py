@@ -1,19 +1,13 @@
-ALLOWED_NODE_TYPES = [
-    "Person",
-    "Company",
-    "Project",
-    "Document",
-]
+ALLOWED_NODE_TYPES = {"Person", "Company", "Project"}
+ALLOWED_EDGE_TYPES = {"MENTIONS", "WORKS_ON", "EMPLOYED_AT"}
 
-ALLOWED_EDGE_TYPES = [
-    "works_on",
-    "communicates_with",
-    "mentions",
-]
-
+# Cypher constraints
 SCHEMA_CONSTRAINTS = [
-    "CREATE CONSTRAINT IF NOT EXISTS person_id FOR (p:Person) REQUIRE p.id IS UNIQUE",
-    "CREATE CONSTRAINT IF NOT EXISTS company_id FOR (c:Company) REQUIRE c.id IS UNIQUE",
-    "CREATE CONSTRAINT IF NOT EXISTS project_id FOR (p:Project) REQUIRE p.id IS UNIQUE",
-    "CREATE CONSTRAINT IF NOT EXISTS document_id FOR (d:Document) REQUIRE d.id IS UNIQUE",
+    "CREATE CONSTRAINT IF NOT EXISTS FOR (p:Person) REQUIRE p.email IS UNIQUE",
+    "CREATE CONSTRAINT IF NOT EXISTS FOR (c:Company) REQUIRE c.domain IS UNIQUE",
+    "CREATE CONSTRAINT IF NOT EXISTS FOR (pr:Project) REQUIRE pr.name IS UNIQUE",
 ]
+
+def install_constraints(tx):
+    for stmt in SCHEMA_CONSTRAINTS:
+        tx.run(stmt)

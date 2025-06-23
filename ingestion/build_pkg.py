@@ -13,7 +13,7 @@ from langfuse.langchain import CallbackHandler
 from .pkg_config import (
     ALLOWED_NODE_TYPES,
     ALLOWED_EDGE_TYPES,
-    SCHEMA_CONSTRAINTS,
+    install_constraints,
 )
 
 from .loaders import load_gmail, load_files
@@ -35,13 +35,15 @@ def _store_triples(triples: List[Tuple[str, str, str, str, str]]) -> None:
         auth=("neo4j", os.environ.get("NEO4J_PASSWORD", "password")),
     )
     with driver.session() as session:
-        for stmt in SCHEMA_CONSTRAINTS:
-            session.run(stmt)
+        session.execute_write(install_constraints)
         for s, stype, r, t, ttype in triples:
             session.run(
-                f"MERGE (a:{stype} {{id:$s}}) MERGE (b:{ttype} {{id:$t}}) MERGE (a)-[:{r}]->(b)",
-                s=s,
-                t=t,
+                f"""
+                MERGE (s:{stype} {{name:$s}})
+                MERGE (o:{ttype} {{name:$o}})
+                MERGE (s)-[:{r}]->(o)
+                """,
+                {"s": s, "o": t},
             )
 
 
@@ -55,8 +57,8 @@ def build_pkg(gmail_query: str | None = None, directory: str | None = None) -> N
     llm = ChatOllama()
     transformer = LLMGraphTransformer(
         llm=llm,
-        allowed_nodes=ALLOWED_NODE_TYPES,
-        allowed_relationships=ALLOWED_EDGE_TYPES,
+        allowed_nodes=list(ALLOWED_NODE_TYPES),
+        allowed_relationships=list(ALLOWED_EDGE_TYPES),
     )
     langfuse = Langfuse()
     handler = CallbackHandler(langfuse)
@@ -84,6 +86,7 @@ def build_pkg(gmail_query: str | None = None, directory: str | None = None) -> N
 
     _store_triples(triples)
     print(f"Stored {len(triples)} triples in Neo4j")
+    return len(triples)
 
 
 if __name__ == "__main__":
@@ -94,4 +97,5 @@ if __name__ == "__main__":
     parser.add_argument("--directory", default=None)
     args = parser.parse_args()
 
-    build_pkg(args.gmail_query, args.directory)
+    added = build_pkg(args.gmail_query, args.directory)
+    print(f"added {added} triples")

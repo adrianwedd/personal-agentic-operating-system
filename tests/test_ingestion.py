@@ -97,7 +97,7 @@ def test_build_pkg_pipeline():
     assert fake_transformer.convert_to_graph_documents.called
     kwargs = fake_transformer.convert_to_graph_documents.call_args.kwargs
     assert fake_handler in kwargs["config"]["callbacks"]
-    assert fake_session.run.called
+    assert fake_session.execute_write.called
 
 
 def test_build_pkg_rejects_invalid_nodes():
@@ -131,4 +131,4 @@ def test_build_pkg_rejects_invalid_nodes():
     ):
         build_pkg.build_pkg("query", None)
 
-    assert fake_session.run.call_count == len(SCHEMA_CONSTRAINTS)
+    assert fake_session.execute_write.call_count == 1
