@@ -3,16 +3,21 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime
 
 from langgraph.graph import StateGraph, END
-from langchain_community.chat_models import ChatOllama
 from langfuse.langchain import CallbackHandler
 from langfuse import Langfuse
 from langchain_core.messages import HumanMessage, AIMessage
 
 from .state import AgentState
-from .nodes import plan_step, prioritise, retrieve_context, execute_tool, generate_response
+from .nodes import (
+    plan_step,
+    prioritise,
+    retrieve_context,
+    execute_tool,
+    generate_response,
+    hitl_pause,
+)
 
 
 HITL_DIR = "data/hitl_queue"
@@ -37,6 +42,7 @@ def build_graph() -> any:
     graph.add_node("retrieve", retrieve_context)
     graph.add_node("execute", execute_tool)
     graph.add_node("hitl", human_approval)
+    graph.add_node("pause", hitl_pause)
     graph.add_node("respond", generate_response)
 
     graph.set_entry_point("plan")
@@ -45,9 +51,16 @@ def build_graph() -> any:
     graph.add_edge("retrieve", "execute")
     graph.add_conditional_edges(
         "execute",
-        lambda s: "hitl" if s.get("current_task", {}).get("status") == "WAITING_HITL" else "respond",
+        lambda s: s.get("current_task", {}).get("status"),
+        {
+            "WAITING_HITL": "hitl",
+            "IN_PROGRESS": "prioritise",
+            "DONE": "respond",
+            "ERROR": "pause",
+        },
     )
     graph.add_edge("hitl", END)
+    graph.add_edge("pause", END)
     graph.add_edge("respond", END)
 
     compiled = graph.compile()

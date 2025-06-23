@@ -1,19 +1,18 @@
-.PHONY: dev test graph pull-models hitl
 
-dev:
-	@echo "Starting services and installing dependencies..."
+dev:                   ## spin up stack + install deps
+	docker compose up -d --pull always
+	uv pip install -r requirements.txt
 
-# run pytest in quiet mode
-test:
-	pytest -q
+graph:                 ## render graph PNG
+	python - <<'PY'
+	from agent.graph import graph
+	graph.get_graph().draw_mermaid_png("docs/langgraph.png")
+	PY
 
-# placeholder for graph visualization
-graph:
-	@echo "Generating graph diagram..."
+test: ruff             ## lint + tests + coverage
+	pytest -q --cov=agent --cov-report=term-missing
 
-# pull models for offline use
-pull-models:
-	@echo "Pulling models for offline use..."
+ruff:
+	ruff .
 
-hitl:
-	python -m hitl_cli
+.PHONY: dev graph test ruff

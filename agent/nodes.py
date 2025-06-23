@@ -18,6 +18,13 @@ from datetime import datetime
 
 from .state import AgentState
 from .tasks_db import add_task
+from langgraph.prebuilt import ToolNode
+
+tool_node = ToolNode([])
+
+
+def remaining_steps(task: dict) -> bool:
+    return bool(task.get("subtasks"))
 
 
 GUIDELINES_FILE = "guidelines.txt"
@@ -146,10 +153,25 @@ def apply_deterministic_rules(
 
 
 def prioritise(state: AgentState) -> Dict[str, Any]:
-    """Assign priority to tasks using deterministic rules then LLM."""
-    tasks = state.get("tasks", [])
+    """Assign priority using deterministic rules then LLM."""
     rules = load_priority_rules()
     llm = ChatOllama()
+
+    if state.get("current_task"):
+        task = state["current_task"]
+        obj = task.get("objective", "")
+        sender = task.get("sender")
+        pr = apply_deterministic_rules(obj, sender, rules)
+        if pr is None:
+            prompt = f"Task: {obj}\nPriority options: critical, high, med, low."
+            ai: AIMessage = llm.invoke([HumanMessage(content=prompt)])
+            pr = ai.content.strip().lower()
+        task["priority"] = pr
+        task["status"] = "READY"
+        add_task(task)
+        return {"current_task": task}
+
+    tasks = state.get("tasks", [])
     results = []
     for t in tasks:
         if isinstance(t, dict):
@@ -179,15 +201,16 @@ def prioritise(state: AgentState) -> Dict[str, Any]:
 
 
 def execute_tool(state: AgentState) -> Dict[str, Any]:
-    """Fake tool execution with optional HITL."""
-    tasks = state.get("tasks", [])
-    if not tasks:
-        return {}
-    task = tasks[0]
-    task["status"] = "IN_PROGRESS"
-    if task.get("requires_hitl"):
-        task["status"] = "WAITING_HITL"
-    return {"current_task": task, "tasks": tasks}
+    """Execute the chosen tool and handle errors."""
+    task = state["current_task"]
+    try:
+        result = tool_node.invoke(task["tool_calls"])
+        task["tool_output"] = result
+        task["status"] = "IN_PROGRESS" if remaining_steps(task) else "DONE"
+    except Exception as exc:
+        task["status"] = "ERROR"
+        task["error"] = str(exc)
+    return {"current_task": task}
 
 
 def generate_response(state: AgentState) -> Dict[str, Any]:
@@ -201,3 +224,8 @@ def generate_response(state: AgentState) -> Dict[str, Any]:
     messages.append(HumanMessage(content=prompt))
     ai: AIMessage = llm.invoke(messages)
     return {"messages": state.get("messages", []) + [ai], "current_task": None}
+
+
+def hitl_pause(state: AgentState) -> Dict[str, Any]:
+    """Pause execution after an error for HITL."""
+    return {}
