@@ -88,7 +88,7 @@ To streamline development, conceptualize your tasks based on the following agent
   * **Responsibilities:**
       * **State Definition:** Define and manage the `AgentState` using Python's `TypedDict`. The state is the single source of truth and must contain fields for `messages`, `tasks`, `current_task`, `tool_output`, and `context_docs`.
       * **Node Implementation:** Implement the core functions as distinct nodes:
-          * `plan_step`: Decomposes a user request into a structured list of tasks.
+          * `plan_step`: Decomposes a user request into a structured list of tasks. It should consult the PKG to resolve entities (e.g., expand "email Jane" into Jane's email address).
           * `retrieve_context`: Fetches information from Qdrant using hybrid search.
           * `execute_tool`: Calls external tools (e.g., Gmail, Calendar).
           * `generate_response`: Synthesizes a final answer for the user.
@@ -122,6 +122,7 @@ To streamline development, conceptualize your tasks based on the following agent
   * **Key Files:** `agent/graph.py` (new nodes/edges), `agent/meta_agent.py`.
   * **Responsibilities:**
       * Add a **Human-in-the-Loop (HITL)** checkpoint to the graph for sensitive actions. Use LangGraph's built-in support for interrupting execution and awaiting user input. [2, 3, 16]
+      * When a task requires approval, set its status to `WAITING_HITL` and pause the graph. Resume once input is received.
       * Log the outcomes of HITL interactions (approvals, rejections, edits) as "reflection" documents into a dedicated Qdrant collection.
       * Create a separate "meta-agent" graph that runs periodically. This agent's purpose is to analyze the reflection logs, synthesize high-level "guidelines" for improvement, and update a central `guidelines.txt` file.
       * Ensure the primary agent's system prompt is dynamically updated with the contents of `guidelines.txt` at runtime, thus closing the learning loop.

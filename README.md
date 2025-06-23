@@ -36,6 +36,20 @@ Run it with:
 python -m tool_agent "Draft a reply to Jane and schedule a meeting tomorrow"
 ```
 
+## Graph-Based Planning & Task Management
+The planner now incorporates results from the Personal Knowledge Graph. Ambiguous
+requests are clarified and tasks are prioritized automatically.
+
+Example:
+
+```bash
+python -m tool_agent "Email Jane"
+```
+
+If the PKG contains Jane's address, the plan will generate
+`draft_email(to='jane.d@example.com')`. Incoming emails matching rules in
+`rules/priority.yml` will be elevated without calling the LLM.
+
 ## Testing
 A suite of unit tests is provided under `tests/`. Run them with:
 
@@ -61,4 +75,7 @@ For manual validation, follow these sprint-specific checks:
    - Run `ingestion/build_pkg.py` and verify a Langfuse trace was recorded.
    - Inspect Neo4j to confirm `Person`, `Company`, and `Project` nodes exist.
    - Query `rag_agent.py` and check that answers reference these entities.
+6. **Sprint 5 – Graph Planning & Task Rules**
+   - Verify `plan_step` queries the PKG to expand requests like "Email Jane" into concrete tool calls.
+   - Send yourself an email with subject "Invoice" and ensure the `prioritise` node marks it `med` priority without an LLM call.
 
