@@ -1,24 +1,33 @@
 """Meta-agent that synthesizes guidelines from reflection logs."""
+
 from __future__ import annotations
 
-import glob
-import os
 from langchain_community.chat_models import ChatOllama
 from langchain_core.messages import HumanMessage, AIMessage
+from langchain_community.embeddings import OllamaEmbeddings
+from langchain_community.vectorstores import Qdrant
+from qdrant_client import QdrantClient
 
 
-REFLECT_DIR = "data/reflections"
+COLLECTION = "reflections_log"
 GUIDELINES_FILE = "guidelines.txt"
 
 
+def _load_reflections() -> list[str]:
+    client = QdrantClient(url="http://localhost:6333")
+    store = Qdrant(
+        client=client,
+        collection_name=COLLECTION,
+        embeddings=OllamaEmbeddings(),
+    )
+    docs = store.similarity_search("recent reflections", k=20)
+    return [d.page_content for d in docs]
+
+
 def run_meta_agent() -> str | None:
-    files = glob.glob(os.path.join(REFLECT_DIR, "*.jsonl"))
-    if not files:
+    texts = _load_reflections()
+    if not texts:
         return None
-    texts = []
-    for f in files:
-        with open(f) as fh:
-            texts.extend([line.strip() for line in fh if line.strip()])
     llm = ChatOllama()
     ai: AIMessage = llm.invoke([HumanMessage(content="\n".join(texts))])
     with open(GUIDELINES_FILE, "w") as fh:

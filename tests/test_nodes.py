@@ -1,4 +1,5 @@
-import os, sys
+import os
+import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -33,7 +34,7 @@ def test_plan_step_includes_email_metadata():
             self.last_input = None
 
         def invoke(self, msgs):
-            self.last_input = msgs[0].content
+            self.last_input = "\n".join(m.content for m in msgs)
             return AIMessage(content="- draft_email(to='jane.d@example.com')")
 
     fake_driver = MagicMock()
@@ -113,6 +114,23 @@ def test_hitl_cli_logs_reflection(tmp_path, monkeypatch):
 
     monkeypatch.setattr("hitl_cli.HITL_DIR", str(queue_dir))
     monkeypatch.setattr("hitl_cli.REFLECT_DIR", str(refl_dir))
+
+    class DummyStore:
+        def __init__(self):
+            self.texts = []
+
+        def add_texts(self, texts, ids=None):
+            self.texts.extend(texts)
+
+    dummy = DummyStore()
+    monkeypatch.setattr(
+        "hitl_cli.Qdrant",
+        lambda client, collection_name, embeddings: dummy,
+    )
+    monkeypatch.setattr("hitl_cli.QdrantClient", lambda url: None)
+    monkeypatch.setattr("hitl_cli.OllamaEmbeddings", lambda: None)
+
     hitl_cli.process_queue(action="approved")
     logs = list(refl_dir.glob("*.jsonl"))
     assert logs, "reflection file created"
+    assert dummy.texts
