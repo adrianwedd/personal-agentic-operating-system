@@ -1,3 +1,5 @@
 # Personal Agentic OS
 
-Welcome to the documentation site for the Personal Agentic Operating System.
+Welcome! This site mirrors key docs from the repo. For a quick overview, see the README below.
+
+!include ../README.md

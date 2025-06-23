@@ -15,9 +15,9 @@ ruff:
 
 
 
-docserve:
+docserve:  ## live docs
 	mkdocs serve
 
-docbuild:
+docbuild:  ## build static site
 	mkdocs build --strict
 .PHONY: docserve docbuild

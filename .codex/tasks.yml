@@ -137,3 +137,19 @@ tasks:
     acceptance_criteria:
       - QA sign-off checklist uploaded to repository `docs/QA/v0.4.0-rc2.md`.
       - GitHub release draft created with artefacts.
+
+  - id: DOC-1
+    title: "Replace README with polished badge-rich version"
+    ⏳: 0.5h 📚
+  - id: DOC-2
+    title: "Bootstrap MkDocs with Material theme"
+    ⏳: 1h 📚 ⚙️
+    depends_on: [DOC-1]
+  - id: DOC-3
+    title: "Add docserve/docbuild targets & GH Pages deployment"
+    ⏳: 1h 📚 ⚙️
+    depends_on: [DOC-2]
+  - id: DOC-4
+    title: "Write Quick-start and Architecture overview docs"
+    ⏳: 1.5h 📚
+    depends_on: [DOC-2]
