@@ -11,10 +11,14 @@ test: ruff
 ruff:
 	ruff check .
 
-.PHONY: dev graph test ruff hitl
+
+.PHONY: dev graph test ruff hitl meta-agent
 
 hitl:
 	python src/hitl_cli.py
+
+meta-agent:
+	python scripts/run_meta_agent.py
 
 
 
