@@ -25,3 +25,12 @@ jobs:
           export NEO4J_URL=$NEO4J_URI
           export NEO4J_PASSWORD=password
           pytest -q --cov=agent --cov-fail-under=80
+
+  smoke:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --pull always
+      - run: make smoke
+      - run: docker compose down

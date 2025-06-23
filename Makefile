@@ -9,13 +9,7 @@ onboard:
 	python scripts/onboard.py
 
 smoke:                 ## headless health-check (CI)
-	python - <<'PY'
-	from scripts.healthcheck import wait_for_stack
-	import sys
-	ok, report = wait_for_stack(timeout=60)
-	print(report)
-	sys.exit(0 if ok else 1)
-	PY
+	python scripts/healthcheck.py
 
 test: ruff
 	pytest -q --cov=agent --cov-report=term-missing --cov-fail-under=80

@@ -68,14 +68,19 @@ def patch_langfuse_image_if_needed() -> None:
         suffix = "2.58.0-arm64" if platform.machine() in {"arm64", "aarch64"} else "2.58.0"
         patch_env("LANGFUSE_IMAGE", f"ghcr.io/langfuse/langfuse:{suffix}")
 
-def suggest_local_model() -> str:
-    """Return smallest model usable by Ollama given RAM."""
-    gibs = psutil.virtual_memory().total / 2**30
-    if gibs < 4:
-        return "phi3:mini"
-    if gibs < 8:
-        return "llama3.2:3b"
-    return "gemma3:4b"
+def recommended_model() -> str:
+    """Invoke suggest_model.py to choose a suitable Ollama model."""
+    script = REPO_ROOT / "scripts" / "suggest_model.py"
+    code, out = sh(f"{sys.executable} {script}")
+    return out.strip() if code == 0 else "phi3:mini"
+
+def pull_model(model: str) -> None:
+    """Fetch the model via the running Ollama container."""
+    code, out = sh(f"docker compose exec ollama ollama pull {model}")
+    if code != 0:
+        print(out)
+        print("[red]✖ ollama pull failed.[/]")
+        sys.exit(1)
 
 ###############################################################################
 # Interactive steps
@@ -111,11 +116,12 @@ def step_llm() -> None:
     patch_env("USE_GEMINI",   "true" if choice in {"3","5"} else "false")
     patch_env("USE_DEEPSEEK", "true" if choice in {"4","5"} else "false")
 
-def step_model() -> None:
+def step_model() -> str:
     print("\n[bold]📦  Local model selection (Ollama)[/bold]")
-    default_model = suggest_local_model()
+    default_model = recommended_model()
     model = Prompt.ask("Model to pull", default=default_model)
     patch_env("OLLAMA_DEFAULT_MODEL", model)
+    return model
 
 def step_stack() -> None:
     print("\n[bold]🚀  Launching Docker stack[/bold]")
@@ -154,8 +160,9 @@ def main() -> None:
     ensure_env()
     patch_langfuse_image_if_needed()
     step_llm()
-    step_model()
+    model = step_model()
     step_stack()
+    pull_model(model)
     step_health()
     print("\n[bold green]🎉  Setup complete![/]")
     print("Dashboards:")

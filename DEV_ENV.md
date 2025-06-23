@@ -56,6 +56,7 @@ DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRE
 ```
 Copy `.env.example` to `.env` and update values before running `docker compose up`.
 The Langfuse image is multi-arch, so no `platform:` override is required on Apple Silicon.
+You can also run `./bootstrap.sh` for a guided setup that configures `.env` and pulls the stack images.
 
 ## 4. Dev Scripts
 Makefile targets expected by agents:
