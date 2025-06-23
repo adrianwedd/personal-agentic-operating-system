@@ -35,3 +35,10 @@ def wait_for_stack(timeout: int = 120) -> Tuple[bool,str]:
         time.sleep(3)
     report = "\n".join(f"• {svc}: {msg}" for svc,msg in failed)
     return False, report
+
+
+if __name__ == "__main__":
+    import sys
+    ok, report = wait_for_stack(timeout=60)
+    print(report)
+    sys.exit(0 if ok else 1)
