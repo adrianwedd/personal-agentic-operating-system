@@ -20,3 +20,10 @@ def test_trim_long_prompt():
     assert total <= 8192
 
 
+def test_count_tokens_fallback(monkeypatch):
+    """Fallback to word split when tiktoken unavailable."""
+    monkeypatch.setattr(tc, "_encoder", None)
+    text = "hello world"
+    assert tc.count_tokens(text) == 2
+
+
