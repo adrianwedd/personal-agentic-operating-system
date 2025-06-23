@@ -8,9 +8,13 @@ from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import Qdrant
 from qdrant_client import QdrantClient
 
-from .embedding_pipeline import split_documents
-
-from .loaders import load_gmail, load_files
+# Support running as a script (`python ingestion/ingest.py`) or module
+if __package__:
+    from .embedding_pipeline import split_documents
+    from .loaders import load_gmail, load_files
+else:  # pragma: no cover - direct script execution
+    from embedding_pipeline import split_documents  # type: ignore
+    from loaders import load_gmail, load_files  # type: ignore
 
 
 CHUNK_SIZE = 1000
