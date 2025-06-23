@@ -2,6 +2,7 @@ langchain
 langgraph
 langchain-openai
 langchain-community
+langchain-google-community
 ollama
 qdrant-client
 langfuse
