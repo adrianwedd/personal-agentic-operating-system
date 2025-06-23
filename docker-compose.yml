@@ -21,8 +21,12 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
       SALT: ${SALT}
-      CLICKHOUSE_URL: ${CLICKHOUSE_URL:-}
       CLICKHOUSE_MIGRATION_URL: ${CLICKHOUSE_MIGRATION_URL:-}
+      CLICKHOUSE_URL: ${CLICKHOUSE_URL:-}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-clickhouse}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-""}
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-langfuse}
+      CLICKHOUSE_CLUSTER_ENABLED: ${CLICKHOUSE_CLUSTER_ENABLED:-false}
       # keys injected via .env
     # If CLICKHOUSE_URL is empty, onboard.py patches LANGFUSE_IMAGE to 2.58.0-arm64 automatically.
     networks: ["agentnet"]
