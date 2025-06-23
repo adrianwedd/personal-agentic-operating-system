@@ -18,10 +18,10 @@
   status: in_progress
 - id: neo4j_init_script
   description: Add startup script to install PKG constraints when Neo4j boots.
-  status: todo
+  status: done
 - id: ci_workflow_updates
   description: Extend CI with Neo4j service and publish documentation.
-  status: todo
+  status: done
 - id: docs_pipeline
   description: Create GitHub Pages workflow to deploy MkDocs site.
-  status: todo
+  status: done
