@@ -18,9 +18,9 @@ def test_plan_step_uses_pkg():
     fake_driver = MagicMock()
     fake_session = fake_driver.session.return_value.__enter__.return_value
     fake_session.run.return_value = [{"entity": "ProjectX"}]
-    with patch("agent.nodes.ChatOllama", return_value=fake_llm), patch(
-        "agent.nodes.GraphDatabase.driver", return_value=fake_driver
-    ):
+    import importlib
+    rc = importlib.import_module("agent.retrieve_context")
+    with patch("agent.nodes.ChatOllama", return_value=fake_llm), patch.object(rc.GraphDatabase, "driver", return_value=fake_driver):
         out = nodes.plan_step(state)
     assert out["tasks"] == ["step1", "step2"]
     assert fake_session.run.called
@@ -44,9 +44,9 @@ def test_plan_step_includes_email_metadata():
     ]
 
     llm = FakeLLM()
-    with patch("agent.nodes.ChatOllama", return_value=llm), patch(
-        "agent.nodes.GraphDatabase.driver", return_value=fake_driver
-    ):
+    import importlib
+    rc = importlib.import_module("agent.retrieve_context")
+    with patch("agent.nodes.ChatOllama", return_value=llm), patch.object(rc.GraphDatabase, "driver", return_value=fake_driver):
         out = nodes.plan_step(state)
 
     assert "jane.d@example.com" in llm.last_input
@@ -62,12 +62,61 @@ def test_retrieve_context_returns_metadata():
     fake_doc.page_content = "hi"
     fake_retriever = MagicMock()
     fake_retriever.invoke.return_value = [fake_doc]
-    with patch("agent.nodes.GraphDatabase.driver", return_value=fake_driver), patch(
-        "agent.nodes.retriever", fake_retriever
+    import importlib
+    rc = importlib.import_module("agent.retrieve_context")
+    with patch.object(rc.GraphDatabase, "driver", return_value=fake_driver), patch(
+        "agent.retrieve_context.retriever", fake_retriever
     ):
         out = nodes.retrieve_context(state)
     assert out["context_docs"] == ["hi"]
     assert out["graph_metadata"] == [{"doc_id": "1", "entity": "Alice"}]
+
+
+def test_retrieve_context_filters_entities():
+    state = {"messages": [HumanMessage(content="hello")]} 
+    fake_driver = MagicMock()
+    fake_session = fake_driver.session.return_value.__enter__.return_value
+    fake_session.run.return_value = [{"entity": "Alice"}]
+
+    alice_doc = MagicMock()
+    alice_doc.page_content = "alice"
+    bob_doc = MagicMock()
+    bob_doc.page_content = "bob"
+
+    def invoke_side_effect(query, search_kwargs=None):
+        if search_kwargs and "filter" in search_kwargs:
+            if "Alice" in search_kwargs["filter"]["must"][0]["match"].get("any", []):
+                return [alice_doc]
+        return [alice_doc, bob_doc]
+
+    fake_retriever = MagicMock()
+    fake_retriever.invoke.side_effect = invoke_side_effect
+
+    import importlib
+    rc = importlib.import_module("agent.retrieve_context")
+    with patch.object(rc.GraphDatabase, "driver", return_value=fake_driver), patch(
+        "agent.retrieve_context.retriever", fake_retriever
+    ):
+        out = nodes.retrieve_context(state)
+
+    assert out["context_docs"] == ["alice"]
+
+
+def test_filter_qdrant_fallback():
+    import importlib
+    rc = importlib.import_module("agent.retrieve_context")
+
+    doc = MagicMock()
+    doc.page_content = "hi"
+    fake_retriever = MagicMock()
+    fake_retriever.invoke.side_effect = [[], [doc]]
+
+    with patch.object(rc, "retriever", fake_retriever), patch.object(rc, "logging") as lg:
+        docs = rc.filter_qdrant_by_entities("hello", ["Alice"])
+
+    assert docs == [doc]
+    assert fake_retriever.invoke.call_count == 2
+    assert lg.warning.called
 
 
 def test_prioritise_applies_rules():
