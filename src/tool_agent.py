@@ -27,16 +27,21 @@ def build_tools() -> List:
 
 
 def build_agent() -> any:
-    """Create the LangGraph agent with tools."""
+    """Create the LangGraph agent with tools and save graph diagram."""
     llm = ChatOllama()
     tools = build_tools()
-    return create_react_agent(llm, tools)
+    agent = create_react_agent(llm, tools)
+    agent.get_graph().draw_mermaid_png(output_file_path="tool_graph.png")
+    return agent
 
 
 def main(prompt: str) -> None:
     """Run the tool agent in CLI mode."""
     agent = build_agent()
-    state: AgentState = {"messages": [HumanMessage(content=prompt)], "remaining_steps": 5}
+    state: AgentState = {
+        "messages": [HumanMessage(content=prompt)],
+        "remaining_steps": 5,
+    }
     langfuse = Langfuse()
     handler = CallbackHandler(langfuse)
     result = agent.invoke(state, config={"callbacks": [handler]})

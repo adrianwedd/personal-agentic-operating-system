@@ -35,3 +35,26 @@ Run it with:
 ```bash
 python -m tool_agent "Draft a reply to Jane and schedule a meeting tomorrow"
 ```
+
+## Testing
+A suite of unit tests is provided under `tests/`. Run them with:
+
+```bash
+make test
+```
+
+For manual validation, follow these sprint-specific checks:
+
+1. **Sprint 0 – Environment Setup**
+   - `docker compose up` then `docker ps` to confirm all containers are healthy.
+   - Verify API access: `curl http://localhost:11434/api/tags` and open the Qdrant and Langfuse UIs in the browser.
+   - Run `minimal_agent.py` and check Langfuse for a captured trace.
+2. **Sprint 1 – Ingestion Pipeline**
+   - On first run of `ingestion/ingest.py`, complete the OAuth flow and ensure `token.json` is created.
+   - After ingestion, confirm vectors exist in Qdrant via its dashboard.
+3. **Sprint 2 – Memory Core (RAG)**
+   - Query `rag_agent.py` with known keywords and semantic questions and verify relevant documents are returned.
+   - Inspect Langfuse traces to see the `retrieve_context` node outputs.
+4. **Sprint 3 – Action Engine (Tools)**
+   - Use `tool_agent.py` to schedule a calendar event and draft an email. Confirm the actions in Google Calendar and Gmail Drafts.
+
