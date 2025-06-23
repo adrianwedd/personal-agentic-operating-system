@@ -19,3 +19,5 @@ pytest
 pytest-cov
 pyyaml
 tiktoken
+rich>=13.7
+psutil>=5.9
