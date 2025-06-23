@@ -11,11 +11,14 @@ qdrant_port=$(get_host_port qdrant 6333/tcp        "${QDRANT_PORT:-52873}")
 
 echo ""
 echo "🌐  Open your browser:"
-printf "%-16s →  http://localhost:%s\n" "Langfuse UI"     "$langfuse_port"
-printf "%-16s →  http://localhost:%s/play\n" "ClickHouse UI" "$ch_http_port"
-printf "%-16s →  http://localhost:%s\n" "Neo4j Browser"  "$neo4j_http"
-printf "%-16s →  http://localhost:%s\n" "Ollama REST"    "$ollama_port"
-printf "%-16s →  http://localhost:%s\n" "Qdrant REST"    "$qdrant_port"
+printf "%-16s →  %s\n"  "Langfuse UI"          "http://localhost:${LANGFUSE_PORT:-57660}"
+printf "%-16s →  %s/play\n"  "ClickHouse UI"   "http://localhost:${CLICKHOUSE_HTTP_PORT:-57659}"
+printf "%-16s →  %s\n"  "Neo4j Browser"       "http://localhost:${NEO4J_HTTP_PORT:-7474}"
+printf "%-16s →  %s\n"  "Ollama REST"         "http://localhost:${OLLAMA_PORT:-11434}"
+printf "%-16s →  %s\n"  "Qdrant REST"         "http://localhost:${QDRANT_PORT:-52873}"
+printf "%-16s →  %s\n"  "Trace API"          "http://localhost:8000"
+printf "%-16s →  %s\n"  "Graph UI"           "http://localhost:5173"
+
 echo ""
 echo "Tip: add '--ui' to auto-open Langfuse in your default browser."
 

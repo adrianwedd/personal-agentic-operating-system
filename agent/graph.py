@@ -18,6 +18,7 @@ from .nodes import (
     generate_response,
     hitl_pause,
 )
+from trace_agent.decorators import traced
 
 
 HITL_DIR = "data/hitl_queue"
@@ -37,13 +38,13 @@ def human_approval(state: AgentState) -> dict:
 
 def build_graph() -> any:
     graph = StateGraph(AgentState)
-    graph.add_node("plan", plan_step)
-    graph.add_node("prioritise", prioritise)
-    graph.add_node("retrieve", retrieve_context)
-    graph.add_node("execute", execute_tool)
-    graph.add_node("hitl", human_approval)
-    graph.add_node("pause", hitl_pause)
-    graph.add_node("respond", generate_response)
+    graph.add_node("plan", traced("plan")(plan_step))
+    graph.add_node("prioritise", traced("prioritise")(prioritise))
+    graph.add_node("retrieve", traced("retrieve")(retrieve_context))
+    graph.add_node("execute", traced("execute")(execute_tool))
+    graph.add_node("hitl", traced("hitl")(human_approval))
+    graph.add_node("pause", traced("pause")(hitl_pause))
+    graph.add_node("respond", traced("respond")(generate_response))
 
     graph.set_entry_point("plan")
     graph.add_edge("plan", "prioritise")

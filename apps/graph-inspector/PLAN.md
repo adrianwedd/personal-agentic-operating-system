@@ -89,6 +89,10 @@ Phase | Task | Output
 cd trace-agent && uvicorn main:app --reload
 cd apps/graph-inspector && yarn dev
 ```
+To run inside Docker:
+```bash
+docker compose up trace-agent graph-inspector
+```
 
 ## CODEX tasks
 
