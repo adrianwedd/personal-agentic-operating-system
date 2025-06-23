@@ -2,9 +2,9 @@ from typing import TypedDict, List
 
 from langchain_community.chat_models import ChatOllama
 from langgraph.graph import StateGraph, END
-from langgraph.graph.state import add_messages
 from langchain_core.messages import HumanMessage, AIMessage
-from langfuse import Langfuse, LangfuseCallbackHandler
+from langfuse import Langfuse
+from langfuse.langchain import CallbackHandler
 
 
 class AgentState(TypedDict):
@@ -29,7 +29,7 @@ def main(prompt: str) -> None:
     graph.add_edge("ollama", END)
     compiled = graph.compile()
     langfuse = Langfuse()
-    handler = LangfuseCallbackHandler(langfuse)
+    handler = CallbackHandler(langfuse)
     result = compiled.invoke(state, config={"callbacks": [handler]})
     final: AIMessage = result["messages"][-1]
     print(final.content)
