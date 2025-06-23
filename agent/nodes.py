@@ -29,7 +29,7 @@ def _query_pkg(query: str) -> tuple[list[str], list[dict]]:
             """
             MATCH (d:Document)-[r]->(e)
             WHERE toLower(e.name) CONTAINS toLower($q)
-            RETURN d.id AS id, e.name AS entity
+            RETURN d.id AS id, e.name AS entity, e.email AS email
             LIMIT 10
             """,
             q=query,
@@ -38,9 +38,12 @@ def _query_pkg(query: str) -> tuple[list[str], list[dict]]:
         for record in result:
             entity = record.get("entity")
             doc_id = record.get("id")
+            email = record.get("email")
             item = {"entity": entity}
             if doc_id is not None:
                 item["doc_id"] = doc_id
+            if email is not None:
+                item["email"] = email
             data.append(item)
     doc_ids = [d["doc_id"] for d in data if "doc_id" in d]
     return doc_ids, data
@@ -83,7 +86,13 @@ def plan_step(state: AgentState) -> Dict[str, Any]:
     """Generate a task list informed by PKG context."""
     prompt = state["messages"][-1].content
     _, meta = _query_pkg(prompt)
-    context = ", ".join(m["entity"] for m in meta)
+    parts = []
+    for m in meta:
+        if "email" in m:
+            parts.append(f"{m['entity']} <{m['email']}>")
+        else:
+            parts.append(m["entity"])
+    context = ", ".join(parts)
     llm = ChatOllama()
     user_prompt = (
         f"Known entities: {context}\nUser request: {prompt}\nPlan as bullet list."
