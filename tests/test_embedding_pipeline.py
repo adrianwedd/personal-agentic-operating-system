@@ -33,3 +33,7 @@ def test_sentence_strategy():
     assert all(c.metadata["split_strategy"] == "sentence" for c in chunks)
 
 
+def test_select_strategy_empty():
+    assert select_strategy([]) == "none"
+
+

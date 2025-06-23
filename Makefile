@@ -6,10 +6,10 @@ graph:
 	python -c "from agent.graph import build_graph; build_graph()"
 
 test: ruff
-	pytest -q --cov=agent --cov-report=term-missing
+	pytest -q --cov=agent --cov-report=term-missing --cov-fail-under=80
 
 ruff:
-	ruff .
+	ruff check .
 
 .PHONY: dev graph test ruff
 
