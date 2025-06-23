@@ -5,9 +5,10 @@ ClickHouse's system tables generate frequent background merges which can flood t
 ## Configuration
 
 1. Copy `docker/clickhouse/config.xml` into your container at `/etc/clickhouse-server/config.d/dev.xml`.
-2. Restart the `clickhouse` service to apply the settings.
+2. Copy `clickhouse-mutation-pool.xml` into your container at `/etc/clickhouse-server/config.d/10-mutation-pool.xml`.
+3. Restart the `clickhouse` service to apply the settings.
 
-The config lowers the log level to `information`, limits background threads and keeps system logs for only three days.
+These overrides lower the log level, limit background threads and pin mutation pool entries to 8 so ClickHouse 24 starts cleanly.
 
 ## Pruning helper
 

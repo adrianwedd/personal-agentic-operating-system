@@ -1,5 +1,6 @@
 <yandex>
   <merge_tree>
     <number_of_free_entries_in_pool_to_execute_mutation>8</number_of_free_entries_in_pool_to_execute_mutation>
+    <number_of_free_entries_in_pool_to_execute_optimize_entire_partition>8</number_of_free_entries_in_pool_to_execute_optimize_entire_partition>
   </merge_tree>
 </yandex>
