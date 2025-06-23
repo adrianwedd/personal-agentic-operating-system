@@ -61,6 +61,24 @@ services:
       - ./data/neo4j:/data
       - ./constraints.cypher:/docker-entrypoint-initdb.d/constraints.cypher:ro
     networks: ["agentnet"]
+  trace-agent:
+    build:
+      context: .
+      dockerfile: trace_agent/Dockerfile
+    container_name: trace-agent
+    ports:
+      - "8000:8000"
+    networks: ["agentnet"]
+  graph-inspector:
+    build:
+      context: apps/graph-inspector
+      dockerfile: Dockerfile
+    container_name: graph-inspector
+    depends_on:
+      - trace-agent
+    ports:
+      - "5173:80"
+    networks: ["agentnet"]
 
 networks:
   agentnet:

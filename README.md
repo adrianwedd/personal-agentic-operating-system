@@ -32,6 +32,7 @@ cd personal-agentic-operating-system
 ./bootstrap.sh                  # 🚀 zero-click setup wizard
 python src/minimal_agent.py "Summarise my inbox"
 make task-api                   # optional REST interface
+cd apps/graph-inspector && yarn dev  # live LangGraph viewer
 ```
 
 > **Tip:** first launch downloads base Ollama model (~3 GB). Subsequent runs are instant.
@@ -78,6 +79,7 @@ Site-rendered docs: <https://adrianwedd.github.io/personal-agentic-operating-sys
 | `make graph`| Render Mermaid PNG of current LangGraph |
 | `make docserve`| Hot-reload MkDocs at <http://127.0.0.1:8000> |
 | `make task-api`| Launch FastAPI task API |
+| `yarn dev` (apps/graph-inspector)| Live graph inspector UI |
 
 ## 🔄 Meta-agent Schedule
 
