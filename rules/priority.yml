@@ -1,6 +1,15 @@
 bank_whitelist:
   - trustedbank.com
+  - securebank.com
 patterns:
-  - regex: "(?i)invoice"
+  - regex: "(?i)fraud|security alert"
+    priority: critical
+  - regex: "(?i)invoice|payment due"
     priority: med
+  - regex: "(?i)meeting|schedule|calendar"
+    priority: high
+llm_thresholds:
+  critical: 0.9
+  high: 0.75
+  med: 0.5
 default: low

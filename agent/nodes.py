@@ -107,6 +107,34 @@ def apply_deterministic_rules(
     return None
 
 
+def _score_with_llm(llm, objective: str) -> float:
+    """Return a numeric urgency score using the LLM (0-1)."""
+    prompt = (
+        "On a scale from 0 to 1, how urgent is the following task?"
+        " Respond with just the number.\nTask: "
+        + objective
+    )
+    msgs = trim_messages([HumanMessage(content=prompt)])
+    ai: AIMessage = llm.chat(msgs)
+    match = re.search(r"0(?:\.\d+)?|1(?:\.0+)?", ai.content)
+    try:
+        return float(match.group()) if match else 0.0
+    except Exception:
+        return 0.0
+
+
+def _priority_from_score(score: float, rules: dict) -> str:
+    """Map numeric score to priority level via thresholds."""
+    t = rules.get("llm_thresholds", {})
+    if score >= t.get("critical", 0.95):
+        return "critical"
+    if score >= t.get("high", 0.75):
+        return "high"
+    if score >= t.get("med", 0.5):
+        return "med"
+    return rules.get("default", "low")
+
+
 def prioritise(state: AgentState) -> Dict[str, Any]:
     """Assign priority using deterministic rules then LLM."""
     rules = load_priority_rules()
@@ -116,12 +144,14 @@ def prioritise(state: AgentState) -> Dict[str, Any]:
         task = state["current_task"]
         obj = task.get("objective", "")
         sender = task.get("sender")
-        pr = apply_deterministic_rules(obj, sender, rules)
-        if pr is None:
-            prompt = f"Task: {obj}\nPriority options: critical, high, med, low."
-            msgs = trim_messages([HumanMessage(content=prompt)])
-            ai: AIMessage = llm.chat(msgs)
-            pr = ai.content.strip().lower()
+        pr_det = apply_deterministic_rules(obj, sender, rules)
+        score = _score_with_llm(llm, obj)
+        pr_llm = _priority_from_score(score, rules)
+        if pr_det is None:
+            pr = pr_llm
+        else:
+            order = {"low": 1, "med": 2, "high": 3, "critical": 4}
+            pr = pr_det if order.get(pr_det, 0) >= order.get(pr_llm, 0) else pr_llm
         task["priority"] = pr
         task["status"] = "READY"
         add_task(task)
@@ -136,12 +166,14 @@ def prioritise(state: AgentState) -> Dict[str, Any]:
         else:
             obj = t
             sender = None
-        pr = apply_deterministic_rules(obj, sender, rules)
-        if pr is None:
-            prompt = f"Task: {obj}\nPriority options: critical, high, med, low."
-            msgs = trim_messages([HumanMessage(content=prompt)])
-            ai: AIMessage = llm.chat(msgs)
-            pr = ai.content.strip().lower()
+        pr_det = apply_deterministic_rules(obj, sender, rules)
+        score = _score_with_llm(llm, obj)
+        pr_llm = _priority_from_score(score, rules)
+        if pr_det is None:
+            pr = pr_llm
+        else:
+            order = {"low": 1, "med": 2, "high": 3, "critical": 4}
+            pr = pr_det if order.get(pr_det, 0) >= order.get(pr_llm, 0) else pr_llm
         results.append(
             {
                 "task_id": str(uuid.uuid4()),

@@ -10,7 +10,9 @@ def test_prioritise_rules():
     }
     from unittest.mock import patch
 
-    with patch("agent.nodes.add_task"), patch("agent.nodes.get_default_client"):
+    with patch("agent.nodes.add_task"), patch("agent.nodes.get_default_client"), patch(
+        "agent.nodes._score_with_llm", return_value=0.2
+    ):
         new_state = prioritise(state)
     assert new_state["current_task"]["priority"] == "high"
     assert new_state["current_task"]["status"] == "READY"
