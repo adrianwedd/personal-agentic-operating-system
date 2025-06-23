@@ -9,6 +9,9 @@ from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import Qdrant
 from qdrant_client import QdrantClient
 from neo4j import GraphDatabase
+import os
+import re
+import yaml
 
 
 class AgentState(TypedDict, total=False):
@@ -100,3 +103,51 @@ def plan_step(state: AgentState) -> Dict[str, Any]:
     ai: AIMessage = llm.invoke([HumanMessage(content=user_prompt)])
     tasks = [t.strip("- ") for t in ai.content.splitlines() if t.strip()]
     return {"tasks": tasks}
+
+
+PRIORITY_RULES_FILE = "rules/priority.yml"
+
+
+def load_priority_rules(path: str = PRIORITY_RULES_FILE) -> dict:
+    """Load priority rules from YAML, return empty dict if missing."""
+    if not os.path.exists(path):
+        return {}
+    with open(path, "r") as fh:
+        return yaml.safe_load(fh)
+
+
+def apply_deterministic_rules(
+    objective: str, sender: str | None, rules: dict
+) -> str | None:
+    """Return priority if a deterministic rule matches."""
+    domain = sender.split("@")[-1] if sender else None
+    if domain and domain in rules.get("bank_whitelist", []):
+        return "high"
+    for pat in rules.get("patterns", []):
+        regex = pat.get("regex")
+        priority = pat.get("priority")
+        if regex and re.search(regex, objective, re.IGNORECASE):
+            return priority
+    return None
+
+
+def prioritise(state: AgentState) -> Dict[str, Any]:
+    """Assign priority to tasks using deterministic rules then LLM."""
+    tasks = state.get("tasks", [])
+    rules = load_priority_rules()
+    llm = ChatOllama()
+    results = []
+    for t in tasks:
+        if isinstance(t, dict):
+            obj = t.get("objective", "")
+            sender = t.get("sender")
+        else:
+            obj = t
+            sender = None
+        pr = apply_deterministic_rules(obj, sender, rules)
+        if pr is None:
+            prompt = f"Task: {obj}\nPriority options: critical, high, med, low."
+            ai: AIMessage = llm.invoke([HumanMessage(content=prompt)])
+            pr = ai.content.strip().lower()
+        results.append({"objective": obj, "priority": pr, "status": "READY"})
+    return {"tasks": results}
