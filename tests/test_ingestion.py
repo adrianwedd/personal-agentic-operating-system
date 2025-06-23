@@ -57,3 +57,36 @@ def test_llm_graph_transformer_schema():
     node_types = {n.type for n in gdocs[0].nodes}
     assert "Finance Topic" not in node_types
     assert {"Person", "Project", "Company"}.issubset(node_types)
+
+def test_build_pkg_pipeline():
+    from langchain_core.documents import Document
+    from langchain_experimental.graph_transformers.llm import Node, Relationship, GraphDocument
+    from ingestion import build_pkg
+
+    doc = Document(page_content="Alice works on ProjectX")
+
+    fake_transformer = MagicMock()
+    node_a = Node(id="Alice", type="Person")
+    node_b = Node(id="ProjectX", type="Project")
+    rel = Relationship(source=node_a, target=node_b, type="works_on")
+    gdoc = GraphDocument(nodes=[node_a, node_b], relationships=[rel], source=doc)
+    fake_transformer.convert_to_graph_documents.return_value = [gdoc]
+
+    fake_driver = MagicMock()
+    fake_session = fake_driver.session.return_value.__enter__.return_value
+
+    fake_handler = MagicMock()
+
+    with patch("ingestion.build_pkg._load_docs", return_value=[doc]), patch(
+        "ingestion.build_pkg.LLMGraphTransformer", return_value=fake_transformer
+    ) as lt, patch(
+        "ingestion.build_pkg.GraphDatabase.driver", return_value=fake_driver
+    ), patch(
+        "ingestion.build_pkg.CallbackHandler", return_value=fake_handler
+    ) as cb:
+        build_pkg.build_pkg("query", None)
+
+    assert fake_transformer.convert_to_graph_documents.called
+    kwargs = fake_transformer.convert_to_graph_documents.call_args.kwargs
+    assert fake_handler in kwargs["config"]["callbacks"]
+    assert fake_session.run.called
