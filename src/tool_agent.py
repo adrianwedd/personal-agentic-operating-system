@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import List, Dict, TypedDict
 
 from agent.llm_providers import get_default_client
-from langchain_google_community import GmailToolkit, CalendarToolkit
+from agent import tools as agent_tools
 from langfuse import Langfuse
 from langfuse.langchain import CallbackHandler
 from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
@@ -20,10 +20,8 @@ class AgentState(TypedDict):
 
 
 def build_tools() -> List:
-    """Instantiate Gmail and Calendar tools."""
-    gmail_tools = GmailToolkit().get_tools()
-    cal_tools = CalendarToolkit().get_tools()
-    return list(gmail_tools) + list(cal_tools)
+    """Return sanitized Gmail and Calendar tools."""
+    return agent_tools.build_action_tools()
 
 
 def build_agent() -> any:

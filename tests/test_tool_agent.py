@@ -11,12 +11,7 @@ main = tool_agent.main
 
 
 def test_build_tools():
-    fake_gmail = MagicMock()
-    fake_gmail.get_tools.return_value = ["g"]
-    fake_cal = MagicMock()
-    fake_cal.get_tools.return_value = ["c"]
-    with patch("tool_agent.GmailToolkit", return_value=fake_gmail), \
-         patch("tool_agent.CalendarToolkit", return_value=fake_cal):
+    with patch("tool_agent.agent_tools.build_action_tools", return_value=["g", "c"]):
         tools = build_tools()
     assert tools == ["g", "c"]
 
