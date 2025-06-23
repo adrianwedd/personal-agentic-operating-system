@@ -62,6 +62,8 @@ if [[ ! -f .env ]]; then
         sed -i "s/POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 8)/" .env
     sed -i'' "s/NEO4J_PASSWORD=.*/NEO4J_PASSWORD=$(openssl rand -hex 8)/" .env 2>/dev/null || \
         sed -i "s/NEO4J_PASSWORD=.*/NEO4J_PASSWORD=$(openssl rand -hex 8)/" .env
+    sed -i'' "s/CLICKHOUSE_PASSWORD=.*/CLICKHOUSE_PASSWORD=$(openssl rand -hex 8)/" .env 2>/dev/null || \
+        sed -i "s/CLICKHOUSE_PASSWORD=.*/CLICKHOUSE_PASSWORD=$(openssl rand -hex 8)/" .env
     green "✅ .env created – customise anytime."
 else
     green "📄  Existing .env detected – keeping your settings."
@@ -70,6 +72,9 @@ else
     fi
     if grep -q "^SALT=$" .env || ! grep -q "^SALT=" .env; then
         echo "SALT=$(openssl rand -hex 16)" >> .env
+    fi
+    if grep -q "^CLICKHOUSE_PASSWORD=$" .env || ! grep -q "^CLICKHOUSE_PASSWORD=" .env; then
+        echo "CLICKHOUSE_PASSWORD=$(openssl rand -hex 8)" >> .env
     fi
 fi
 
