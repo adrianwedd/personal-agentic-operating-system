@@ -22,6 +22,7 @@ services:
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
       SALT: ${SALT}
       CLICKHOUSE_URL: ${CLICKHOUSE_URL:-}
+      CLICKHOUSE_MIGRATION_URL: ${CLICKHOUSE_MIGRATION_URL:-}
       # keys injected via .env
     # If CLICKHOUSE_URL is empty, onboard.py patches LANGFUSE_IMAGE to 2.58.0-arm64 automatically.
     networks: ["agentnet"]
@@ -50,6 +51,7 @@ services:
       - ./data/clickhouse:/var/lib/clickhouse
       - ./logs/clickhouse:/var/log/clickhouse-server
       - ./docker/clickhouse/config.xml:/etc/clickhouse-server/config.d/dev-overrides.xml:ro
+      - ./clickhouse-mutation-pool.xml:/etc/clickhouse-server/config.d/10-mutation-pool.xml:ro
     networks: ["agentnet"]
   neo4j:
     image: neo4j:5.20
