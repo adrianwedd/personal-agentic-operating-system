@@ -33,7 +33,7 @@ def test_plan_step_includes_email_metadata():
         def __init__(self):
             self.last_input = None
 
-        def invoke(self, msgs):
+        def invoke(self, msgs, *args, **kwargs):
             self.last_input = "\n".join(m.content for m in msgs)
             return AIMessage(content="- draft_email(to='jane.d@example.com')")
 

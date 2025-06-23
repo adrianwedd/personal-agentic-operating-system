@@ -15,7 +15,7 @@ from datetime import datetime
 from .state import AgentState
 from .tasks_db import add_task
 from langgraph.prebuilt import ToolNode
-from utils.token_counter import trim_messages
+from utils.token_counter import trim_messages, count_message_tokens
 from .retrieve_context import query_pkg, filter_qdrant_by_entities
 
 tool_node = ToolNode([])
@@ -72,8 +72,11 @@ def plan_step(state: AgentState) -> Dict[str, Any]:
     if guidelines:
         messages.append(SystemMessage(content=guidelines))
     messages.append(HumanMessage(content=user_prompt))
+    before = count_message_tokens(messages)
     trimmed = trim_messages(messages)
-    ai: AIMessage = llm.invoke(trimmed)
+    after = count_message_tokens(trimmed)
+    meta_info = {"trimmed": True, "token_delta": before - after} if after < before else {}
+    ai: AIMessage = llm.invoke(trimmed, config={"metadata": meta_info})
     tasks = [t.strip("- ") for t in ai.content.splitlines() if t.strip()]
     return {"tasks": tasks}
 
@@ -158,7 +161,12 @@ def execute_tool(state: AgentState) -> Dict[str, Any]:
     """Execute the chosen tool and handle errors."""
     task = state["current_task"]
     try:
-        result = tool_node.invoke(task["tool_calls"])
+        tool_calls = task.get("tool_calls", [])
+        before = count_message_tokens(tool_calls) if isinstance(tool_calls, list) else 0
+        trimmed_calls = trim_messages(tool_calls) if isinstance(tool_calls, list) else tool_calls
+        after = count_message_tokens(trimmed_calls) if isinstance(trimmed_calls, list) else 0
+        meta_info = {"trimmed": True, "token_delta": before - after} if after < before else {}
+        result = tool_node.invoke(trimmed_calls, config={"metadata": meta_info})
         task["tool_output"] = result
         task["status"] = "IN_PROGRESS" if remaining_steps(task) else "DONE"
     except Exception as exc:
@@ -176,8 +184,11 @@ def generate_response(state: AgentState) -> Dict[str, Any]:
     if guidelines:
         messages.append(SystemMessage(content=guidelines))
     messages.append(HumanMessage(content=prompt))
+    before = count_message_tokens(messages)
     trimmed = trim_messages(messages)
-    ai: AIMessage = llm.invoke(trimmed)
+    after = count_message_tokens(trimmed)
+    meta_info = {"trimmed": True, "token_delta": before - after} if after < before else {}
+    ai: AIMessage = llm.invoke(trimmed, config={"metadata": meta_info})
     return {"messages": state.get("messages", []) + [ai], "current_task": None}
 
 
