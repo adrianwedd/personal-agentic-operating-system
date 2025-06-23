@@ -13,4 +13,5 @@ neo4j
 fastapi
 uvicorn
 pytest
+pytest-cov
 pyyaml
