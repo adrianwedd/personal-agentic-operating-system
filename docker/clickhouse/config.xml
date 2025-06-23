@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<yandex>
+    <logger>
+        <level>information</level>
+        <console>true</console>
+        <log>/var/log/clickhouse-server/clickhouse.log</log>
+        <errorlog>/var/log/clickhouse-server/clickhouse.err.log</errorlog>
+    </logger>
+    <background_pool_size>4</background_pool_size>
+    <background_move_pool_size>1</background_move_pool_size>
+    <background_fetches_pool_size>2</background_fetches_pool_size>
+    <merge_tree>
+        <max_bytes_to_merge_at_min_space_in_pool>1073741824</max_bytes_to_merge_at_min_space_in_pool>
+        <max_bytes_to_merge_at_max_space_in_pool>2147483648</max_bytes_to_merge_at_max_space_in_pool>
+        <parts_to_delay_insert>300</parts_to_delay_insert>
+        <parts_to_throw_insert>600</parts_to_throw_insert>
+    </merge_tree>
+    <system_logs>
+        <metric_log>
+            <engine>
+                <ttl>event_time + INTERVAL 3 DAY</ttl>
+            </engine>
+        </metric_log>
+        <trace_log>
+            <engine>
+                <ttl>event_time + INTERVAL 3 DAY</ttl>
+            </engine>
+        </trace_log>
+        <asynchronous_metric_log>
+            <engine>
+                <ttl>event_time + INTERVAL 3 DAY</ttl>
+            </engine>
+        </asynchronous_metric_log>
+    </system_logs>
+</yandex>

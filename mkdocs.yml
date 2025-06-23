@@ -29,5 +29,6 @@ nav:
   - Guides:
       - Ingestion Pipeline: guides/ingestion_pipeline.md
       - HITL Workflow: guides/hitl_workflow.md
+      - ClickHouse Tuning: guides/clickhouse_tuning.md
   - API Reference: api/index.md
   - Changelog: changelog.md
