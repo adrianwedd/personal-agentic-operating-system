@@ -1,9 +1,10 @@
+"""Agent nodes with PKG-aware planning and retrieval."""
+
 from __future__ import annotations
 
-"""Agent nodes with PKG-aware planning and retrieval."""
-from typing import List, Dict, TypedDict, Any
+from typing import List, Dict, Any
 
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 from langchain_community.chat_models import ChatOllama
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import Qdrant
@@ -12,13 +13,21 @@ from neo4j import GraphDatabase
 import os
 import re
 import yaml
+import uuid
+from datetime import datetime
+
+from .state import AgentState
+from .tasks_db import add_task
 
 
-class AgentState(TypedDict, total=False):
-    messages: List[BaseMessage]
-    tasks: List[str]
-    context_docs: List[str]
-    graph_metadata: List[Dict[str, Any]]
+GUIDELINES_FILE = "guidelines.txt"
+
+
+def _load_guidelines() -> str:
+    if not os.path.exists(GUIDELINES_FILE):
+        return ""
+    with open(GUIDELINES_FILE) as fh:
+        return fh.read().strip()
 
 
 # --- PKG Query Helpers ---------------------------------------------------------
@@ -100,7 +109,12 @@ def plan_step(state: AgentState) -> Dict[str, Any]:
     user_prompt = (
         f"Known entities: {context}\nUser request: {prompt}\nPlan as bullet list."
     )
-    ai: AIMessage = llm.invoke([HumanMessage(content=user_prompt)])
+    guidelines = _load_guidelines()
+    messages: List[BaseMessage] = []
+    if guidelines:
+        messages.append(SystemMessage(content=guidelines))
+    messages.append(HumanMessage(content=user_prompt))
+    ai: AIMessage = llm.invoke(messages)
     tasks = [t.strip("- ") for t in ai.content.splitlines() if t.strip()]
     return {"tasks": tasks}
 
@@ -149,5 +163,41 @@ def prioritise(state: AgentState) -> Dict[str, Any]:
             prompt = f"Task: {obj}\nPriority options: critical, high, med, low."
             ai: AIMessage = llm.invoke([HumanMessage(content=prompt)])
             pr = ai.content.strip().lower()
-        results.append({"objective": obj, "priority": pr, "status": "READY"})
+        results.append(
+            {
+                "task_id": str(uuid.uuid4()),
+                "created_at": datetime.utcnow().isoformat() + "Z",
+                "objective": obj,
+                "priority": pr,
+                "status": "READY",
+                "subtasks": [],
+                "last_updated": datetime.utcnow().isoformat() + "Z",
+            }
+        )
+        add_task(results[-1])
     return {"tasks": results}
+
+
+def execute_tool(state: AgentState) -> Dict[str, Any]:
+    """Fake tool execution with optional HITL."""
+    tasks = state.get("tasks", [])
+    if not tasks:
+        return {}
+    task = tasks[0]
+    task["status"] = "IN_PROGRESS"
+    if task.get("requires_hitl"):
+        task["status"] = "WAITING_HITL"
+    return {"current_task": task, "tasks": tasks}
+
+
+def generate_response(state: AgentState) -> Dict[str, Any]:
+    """Summarize tool output as final message."""
+    llm = ChatOllama()
+    prompt = f"Task {state.get('current_task', {}).get('objective')}: {state.get('tool_output', '')}"
+    guidelines = _load_guidelines()
+    messages: List[BaseMessage] = []
+    if guidelines:
+        messages.append(SystemMessage(content=guidelines))
+    messages.append(HumanMessage(content=prompt))
+    ai: AIMessage = llm.invoke(messages)
+    return {"messages": state.get("messages", []) + [ai], "current_task": None}

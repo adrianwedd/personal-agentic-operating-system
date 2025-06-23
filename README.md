@@ -78,4 +78,8 @@ For manual validation, follow these sprint-specific checks:
 6. **Sprint 5 – Graph Planning & Task Rules**
    - Verify `plan_step` queries the PKG to expand requests like "Email Jane" into concrete tool calls.
    - Send yourself an email with subject "Invoice" and ensure the `prioritise` node marks it `med` priority without an LLM call.
+7. **Sprint 6 – HITL & Meta-Agent**
+   - Run the graph in `agent/graph.py` and ensure a task with `requires_hitl` writes a file under `data/hitl_queue/`.
+   - Execute `make hitl` to approve the task and check a reflection entry is added in `data/reflections/`.
+   - Run `python -m agent.meta_agent` and verify `guidelines.txt` is updated.
 

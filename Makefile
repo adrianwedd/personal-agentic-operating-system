@@ -1,4 +1,4 @@
-.PHONY: dev test graph pull-models
+.PHONY: dev test graph pull-models hitl
 
 dev:
 	@echo "Starting services and installing dependencies..."
@@ -14,3 +14,6 @@ graph:
 # pull models for offline use
 pull-models:
 	@echo "Pulling models for offline use..."
+
+hitl:
+	python -m hitl_cli
