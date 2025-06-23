@@ -32,15 +32,19 @@ def test_ingest_pipeline():
 
 def test_llm_graph_transformer_schema():
     from langchain_core.documents import Document
-    from langchain_experimental.graph_transformers.llm import Node, GraphDocument, _Graph
-    from ingestion.build_pkg import ALLOWED_NODES
+    from langchain_experimental.graph_transformers.llm import (
+        Node,
+        GraphDocument,
+        _Graph,
+    )
+    from ingestion.pkg_config import ALLOWED_NODE_TYPES
     doc = Document(
         page_content=
         "John Doe worked on Project Phoenix with ACME Corp and discussed the budget"
     )
 
     fake_llm = MagicMock()
-    transformer = LLMGraphTransformer(fake_llm, allowed_nodes=ALLOWED_NODES)
+    transformer = LLMGraphTransformer(fake_llm, allowed_nodes=ALLOWED_NODE_TYPES)
     fake_graph = _Graph(
         nodes=[
             Node(id="John Doe", type="Person"),
@@ -60,7 +64,11 @@ def test_llm_graph_transformer_schema():
 
 def test_build_pkg_pipeline():
     from langchain_core.documents import Document
-    from langchain_experimental.graph_transformers.llm import Node, Relationship, GraphDocument
+    from langchain_experimental.graph_transformers.llm import (
+        Node,
+        Relationship,
+        GraphDocument,
+    )
     from ingestion import build_pkg
 
     doc = Document(page_content="Alice works on ProjectX")
@@ -90,3 +98,37 @@ def test_build_pkg_pipeline():
     kwargs = fake_transformer.convert_to_graph_documents.call_args.kwargs
     assert fake_handler in kwargs["config"]["callbacks"]
     assert fake_session.run.called
+
+
+def test_build_pkg_rejects_invalid_nodes():
+    from langchain_core.documents import Document
+    from langchain_experimental.graph_transformers.llm import (
+        Node,
+        Relationship,
+        GraphDocument,
+    )
+    from ingestion import build_pkg
+    from ingestion.pkg_config import SCHEMA_CONSTRAINTS
+
+    doc = Document(page_content="Gandalf casts a spell")
+    fake_transformer = MagicMock()
+    node_a = Node(id="Gandalf", type="Wizard")
+    node_b = Node(id="ProjectX", type="Project")
+    rel = Relationship(source=node_a, target=node_b, type="casts_spell_on")
+    gdoc = GraphDocument(nodes=[node_a, node_b], relationships=[rel], source=doc)
+    fake_transformer.convert_to_graph_documents.return_value = [gdoc]
+
+    fake_driver = MagicMock()
+    fake_session = fake_driver.session.return_value.__enter__.return_value
+    fake_handler = MagicMock()
+
+    with patch("ingestion.build_pkg._load_docs", return_value=[doc]), patch(
+        "ingestion.build_pkg.LLMGraphTransformer",
+        return_value=fake_transformer,
+    ), patch("ingestion.build_pkg.GraphDatabase.driver", return_value=fake_driver), patch(
+        "ingestion.build_pkg.CallbackHandler",
+        return_value=fake_handler,
+    ):
+        build_pkg.build_pkg("query", None)
+
+    assert fake_session.run.call_count == len(SCHEMA_CONSTRAINTS)
