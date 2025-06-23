@@ -15,6 +15,39 @@ This project aims to build a personal, on-premise agentic operating system. The 
   * **Separation of Concerns:** We distinguish between planning ("what to do") and execution ("how to do it"). A dedicated planner node decomposes tasks, which are then executed by specialized tool-using or retrieval nodes.
   * **Structured Context:** Raw data is not enough. The system is designed to transform unstructured data (emails, files) into structured, actionable context through a **Personal Knowledge Graph (PKG)** and a **Vector Store**. [4, 5]
 
+
+## Agentic System Execution Lifecycle
+
+The full reasoning loop follows these stages:
+1. **Ingest** external data via `ingestion/ingest.py`.
+2. **Extract & Embed** context into Qdrant and the PKG.
+3. **Accept User Prompt** and start the LangGraph run.
+4. **Plan** the request into tasks.
+5. **Act** by retrieving context and executing tools per task.
+6. **Respond** to the user, optionally passing through HITL.
+7. **Reflect** with the meta-agent and update `guidelines.txt`.
+
+
+### Recommended Repo Structure (partial)
+
+```
+.
+├── agent/
+│   ├── graph.py
+│   ├── state.py
+│   ├── nodes.py
+│   ├── tools.py
+│   └── meta_agent.py
+├── ingestion/
+│   ├── ingest.py
+│   ├── loaders.py
+│   └── build_pkg.py
+├── docker-compose.yml
+├── .env
+├── requirements.txt  # or pyproject.toml
+└── AGENTS.md
+```
+
 ## 2. Agent Personas & Responsibilities
 
 To streamline development, conceptualize your tasks based on the following agent personas. When you receive a task, identify which persona is best suited to execute it.
@@ -86,6 +119,8 @@ To streamline development, conceptualize your tasks based on the following agent
       * Log the outcomes of HITL interactions (approvals, rejections, edits) as "reflection" documents into a dedicated Qdrant collection.
       * Create a separate "meta-agent" graph that runs periodically. This agent's purpose is to analyze the reflection logs, synthesize high-level "guidelines" for improvement, and update a central `guidelines.txt` file.
       * Ensure the primary agent's system prompt is dynamically updated with the contents of `guidelines.txt` at runtime, thus closing the learning loop.
+The meta-agent embodies the system's capacity for self-awareness. By analyzing reflection logs and rewriting `guidelines.txt`, it allows the agent to refine its own guiding heuristics over time.
+
 
 ## 3. General Contribution Guidelines
 
@@ -103,3 +138,6 @@ To streamline development, conceptualize your tasks based on the following agent
   * **State is Sacred:** Nodes must be pure functions. They receive the current state, perform their logic, and return a dictionary containing only the fields they wish to update. Never modify the state object directly.
   * **Local LLM Interaction:** All interactions with the Large Language Model must be routed through the local Ollama instance via the `ChatOllama` LangChain integration. Do not hard-code calls to external APIs. [17, 18]
   * **Dependencies:** All Python dependencies are managed via `pyproject.toml` and `uv` (or a `requirements.txt` file). Do not use global pip installs. Core dependencies include `langgraph`, `langchain`, `langchain-google-community`, `qdrant-client`, `ollama`, and `langfuse`.
+  * **Unit Tests Encouraged:** For each node in `agent/nodes.py`, create tests in `tests/test_nodes.py` that mock the state and verify returned fields.
+  * **Sanitize Tool Prompts:** When using `ToolNode`, ensure sensitive fields like OAuth tokens are never serialized. Always test tool calls in dry-run mode before production.
+
