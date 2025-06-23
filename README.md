@@ -19,3 +19,10 @@ python -m ingestion.ingest --gmail-query "is:inbox" --directory ./docs
 ```
 
 The script splits documents with `RecursiveCharacterTextSplitter`, generates embeddings via the local Ollama model, and stores them in the `ingestion` collection in Qdrant.
+
+## Retrieval
+`rag_agent.py` provides a simple RAG example. It queries the `ingestion` collection using a Qdrant retriever and feeds the results to a local LLM. Run it with:
+
+```bash
+python -m rag_agent "What do my docs say?"
+```
