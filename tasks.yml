@@ -25,3 +25,17 @@
 - id: docs_pipeline
   description: Create GitHub Pages workflow to deploy MkDocs site.
   status: done
+
+- id: ONB-002
+  title: "Add interactive onboarding and first-run stack debugger"
+  status: in_progress
+  weight: 5
+  description: >
+    Implement scripts/onboard.py, healthcheck.py, suggest_model.py,
+    Makefile targets, env templating, and docker-compose fallback.
+  subtasks:
+    - Build TUI flow with rich
+    - Auto .env patch + LLM provider flags
+    - Model detection & pull
+    - Stack health check + log diagnostics
+    - CI smoke test via `make smoke`

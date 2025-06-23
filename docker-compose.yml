@@ -14,15 +14,16 @@ services:
       - ./data/qdrant:/qdrant/storage
     networks: ["agentnet"]
   langfuse:
-    image: ghcr.io/langfuse/langfuse:3.74.0  # multi-arch
+    image: ${LANGFUSE_IMAGE:-ghcr.io/langfuse/langfuse:3.74.0}
     container_name: langfuse
     ports: ["3000"]                       # internal only
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
       SALT: ${SALT}
-      CLICKHOUSE_URL: ${CLICKHOUSE_URL}
+      CLICKHOUSE_URL: ${CLICKHOUSE_URL:-}
       # keys injected via .env
+    # If CLICKHOUSE_URL is empty, onboard.py patches LANGFUSE_IMAGE to 2.58.0-arm64 automatically.
     networks: ["agentnet"]
   postgres:
     image: postgres:16.2-alpine           # ← pin
