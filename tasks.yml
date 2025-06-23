@@ -9,6 +9,9 @@
   status: done
 - id: extend_pkg
   description: Extend retrieval with a Personal Knowledge Graph powered by LLMGraphTransformer.
+  status: in_progress
+- id: graph_based_planning
+  description: Enhance the planner to reference the PKG when decomposing requests.
   status: todo
 - id: improve_task_management
   description: Improve task management with deterministic rules, LLM prioritization, and human-in-the-loop reflection.
