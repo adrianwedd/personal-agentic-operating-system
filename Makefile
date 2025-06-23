@@ -12,3 +12,12 @@ ruff:
 	ruff .
 
 .PHONY: dev graph test ruff
+
+
+
+docserve:
+	mkdocs serve
+
+docbuild:
+	mkdocs build --strict
+.PHONY: docserve docbuild
