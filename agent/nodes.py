@@ -19,6 +19,7 @@ from datetime import datetime
 from .state import AgentState
 from .tasks_db import add_task
 from langgraph.prebuilt import ToolNode
+from utils.token_counter import trim_messages
 
 tool_node = ToolNode([])
 
@@ -121,7 +122,8 @@ def plan_step(state: AgentState) -> Dict[str, Any]:
     if guidelines:
         messages.append(SystemMessage(content=guidelines))
     messages.append(HumanMessage(content=user_prompt))
-    ai: AIMessage = llm.invoke(messages)
+    trimmed = trim_messages(messages)
+    ai: AIMessage = llm.invoke(trimmed)
     tasks = [t.strip("- ") for t in ai.content.splitlines() if t.strip()]
     return {"tasks": tasks}
 
@@ -164,7 +166,8 @@ def prioritise(state: AgentState) -> Dict[str, Any]:
         pr = apply_deterministic_rules(obj, sender, rules)
         if pr is None:
             prompt = f"Task: {obj}\nPriority options: critical, high, med, low."
-            ai: AIMessage = llm.invoke([HumanMessage(content=prompt)])
+            msgs = trim_messages([HumanMessage(content=prompt)])
+            ai: AIMessage = llm.invoke(msgs)
             pr = ai.content.strip().lower()
         task["priority"] = pr
         task["status"] = "READY"
@@ -183,7 +186,8 @@ def prioritise(state: AgentState) -> Dict[str, Any]:
         pr = apply_deterministic_rules(obj, sender, rules)
         if pr is None:
             prompt = f"Task: {obj}\nPriority options: critical, high, med, low."
-            ai: AIMessage = llm.invoke([HumanMessage(content=prompt)])
+            msgs = trim_messages([HumanMessage(content=prompt)])
+            ai: AIMessage = llm.invoke(msgs)
             pr = ai.content.strip().lower()
         results.append(
             {
@@ -222,7 +226,8 @@ def generate_response(state: AgentState) -> Dict[str, Any]:
     if guidelines:
         messages.append(SystemMessage(content=guidelines))
     messages.append(HumanMessage(content=prompt))
-    ai: AIMessage = llm.invoke(messages)
+    trimmed = trim_messages(messages)
+    ai: AIMessage = llm.invoke(trimmed)
     return {"messages": state.get("messages", []) + [ai], "current_task": None}
 
 
