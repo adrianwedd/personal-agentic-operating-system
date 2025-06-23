@@ -56,6 +56,14 @@ def patch_env(key: str, value: str) -> None:
         txt += f"\n{key}={value}"
     ENV_FILE.write_text(txt)
 
+def patch_langfuse_image_if_needed() -> None:
+    """Downgrade Langfuse image when ClickHouse is unset."""
+    txt = ENV_FILE.read_text()
+    match = re.search(r"^CLICKHOUSE_URL=(.*)$", txt, re.M)
+    if not match or not match.group(1).strip():
+        suffix = "2.58.0-arm64" if platform.machine() in {"arm64", "aarch64"} else "2.58.0"
+        patch_env("LANGFUSE_IMAGE", f"ghcr.io/langfuse/langfuse:{suffix}")
+
 def suggest_local_model() -> str:
     """Return smallest model usable by Ollama given RAM."""
     gibs = psutil.virtual_memory().total / 2**30
@@ -140,6 +148,7 @@ def main() -> None:
         [/bold cyan]"""))
     step_checks()
     ensure_env()
+    patch_langfuse_image_if_needed()
     step_llm()
     step_model()
     step_stack()
