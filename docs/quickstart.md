@@ -6,6 +6,11 @@ Clone the repo and launch the development stack:
 git clone https://github.com/adrianwedd/personal-agentic-operating-system.git
 cd personal-agentic-operating-system
 cp .env.example .env  # fill in secrets
+# Langfuse v3+ requires ClickHouse settings:
+# CLICKHOUSE_MIGRATION_URL=clickhouse://clickhouse:9000
+# CLICKHOUSE_URL=http://clickhouse:8123
+# CLICKHOUSE_USER=clickhouse
+# CLICKHOUSE_PASSWORD=""
 make dev
 ```
 
