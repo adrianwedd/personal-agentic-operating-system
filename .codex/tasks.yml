@@ -1,0 +1,139 @@
+# Wave-A  Δ-003 — Knowledge Depth & Retrieval Quality
+# Owner: @core-dev (solo)    Sprint target: 5–7 calendar days
+# Legend:
+#   ⏳  = estimate (ideal hours)
+#   🔥  = critical‐path item
+#   ⚙️  = build/infra
+#   🧪 = test / QA
+#   📚 = docs
+
+tasks:
+  - id: A-1.1
+    title: "Create PKG schema config & constraints"
+    ⏳: 3h 🔥 ⚙️
+    description: |
+      • Add `ingestion/pkg_config.py` defining ALLOWED_NODE_TYPES, ALLOWED_EDGE_TYPES,
+        and SCHEMA_CONSTRAINTS (Cypher).
+      • Provide helper `install_constraints(tx)` to run at bootstrap.
+    acceptance_criteria:
+      - File exists and is imported by `build_pkg.py`.
+      - `python ingestion/build_pkg.py` on a fresh Neo4j volume exits 0.
+      - Neo4j Browser `CALL db.constraints` lists three uniqueness constraints.
+
+  - id: A-1.2
+    title: "Bootstrap constraints at container start"
+    ⏳: 1h 🔥 ⚙️
+    depends_on: [A-1.1]
+    description: |
+      • Mount `constraints.cypher` into `docker-compose.yml` under neo4j
+        `neo4j-admin init` or via `/docker-entrypoint-initdb.d/`.
+      • Update DEV_ENV.md with note on first-run constraint install.
+    acceptance_criteria:
+      - `docker compose down -v && docker compose up -d neo4j`
+        shows constraints installed automatically.
+
+  - id: A-1.3
+    title: "Filter hallucinated triples in build_pkg.py"
+    ⏳: 2h 🔥
+    depends_on: [A-1.1]
+    description: |
+      • Wrap `transformer.convert()` output, discard triples with disallowed
+        subject/object/predicate types.
+    acceptance_criteria:
+      - Unit test injecting forbidden "Wizard" node yields 0 inserts.
+      - Coverage for new path ≥ 95 %.
+
+  - id: A-2.1
+    title: "Implement two-step RAG retrieval"
+    ⏳: 4h 🔥
+    description: |
+      • Split `agent/retrieve_context.py` into `query_pkg()` and
+        `filter_qdrant_by_entities()`.
+      • Use metadata filter `entities` in Qdrant.
+      • Add fallback branch: if filtered search returns 0 docs, rerun plain
+        vector search (logs warning).
+    acceptance_criteria:
+      - Integration test: when PKG has entity “Alice”, only Alice docs
+        returned.
+      - Fallback path unit-tested.
+
+  - id: A-2.2
+    title: "Add Neo4j service to CI workflow"
+    ⏳: 1h ⚙️ 🧪
+    depends_on: [A-2.1]
+    description: |
+      • Edit `.github/workflows/ci.yml`: add `neo4j:5.20` service with auth,
+        set `NEO4J_AUTH=neo4j/password`.
+      • Inject env vars in test step (`export NEO4J_URI` etc.).
+    acceptance_criteria:
+      - CI pipeline green with new service.
+      - Total runtime increase ≤ 2 min.
+
+  - id: A-3.1
+    title: "Accurate token counter & global trim guard"
+    ⏳: 3h 🔥
+    description: |
+      • Add `utils/token_counter.py` using `tiktoken` (fallback to naïve split).
+      • Apply `trim_messages()` in `plan_step`, `execute_tool`, `generate_response`.
+      • Annotate Langfuse trace meta `{trimmed: true, token_delta: N}`.
+    acceptance_criteria:
+      - 12 k-token synthetic prompt processed without `context_length` error.
+      - Unit test covers trim logic; tokens post-trim ≤ 8 k.
+
+  - id: A-4.1
+    title: "Dynamic embedding pipeline & ingestion hook"
+    ⏳: 4h 🔥
+    description: |
+      • Create `ingestion/embedding_pipeline.py` with strategies `recursive`, `sentence`, `none`.
+      • Replace current logic in `ingestion/ingest.py` to call new pipeline
+        and store `split_strategy` metadata in Qdrant.
+    acceptance_criteria:
+      - Ingest sample PDF → vectors show `split_strategy:"recursive"`.
+      - Ingest short note → `split_strategy:"none"`.
+      - Tests verify strategy selection.
+
+  - id: A-4.2
+    title: "Vector store schema upgrade for entities metadata"
+    ⏳: 2h ⚙️
+    depends_on: [A-4.1]
+    description: |
+      • Migrate Qdrant collection: add payload index on `entities` array for fast filter.
+      • Provide migration script `scripts/migrate_qdrant_0.4.0.py`.
+    acceptance_criteria:
+      - Migration script creates index, runs idempotently.
+      - `qdrant_client.get_collection_info()` shows payload index.
+
+  - id: A-5.0
+    title: "Raise coverage back to ≥80 %"
+    ⏳: 3h 🧪
+    depends_on: [A-1.3, A-2.1, A-3.1, A-4.1]
+    description: |
+      • Add unit tests for trim guard failure path, embedding strategy,
+        PKG filter miss.
+      • Use pytest-cov threshold 80 %.
+    acceptance_criteria:
+      - `make test` passes locally; CI green.
+
+  - id: A-6.0
+    title: "Finalize docs & version bump to 0.4.0-rc2"
+    ⏳: 2h 📚
+    description: |
+      • Fill `CHANGELOG.md` with Δ-002 & Δ-003 bullets.
+      • Draft `RELEASE_NOTES.md` with upgrade steps (`make dev`, Neo4j).
+      • Bump version in `pyproject.toml`; add `docbuild` & `docserve`
+        targets to Makefile; configure `gh-pages` deploy action via `mike`.
+    acceptance_criteria:
+      - Docs site builds locally (`mkdocs build --strict`).
+      - `version` tag shows in footer; CHANGELOG rendered under “Changelog”.
+
+  - id: A-7.0
+    title: "Full QA matrix & tag v0.4.0-rc2"
+    ⏳: 1h 🧪
+    depends_on: [A-5.0, A-6.0]
+    description: |
+      • Execute QA scenarios (Hybrid RAG, overflow guard, HITL) and attach
+        Langfuse trace & screenshots to release draft.
+      • Tag `v0.4.0-rc2`, push images, update README badge.
+    acceptance_criteria:
+      - QA sign-off checklist uploaded to repository `docs/QA/v0.4.0-rc2.md`.
+      - GitHub release draft created with artefacts.
