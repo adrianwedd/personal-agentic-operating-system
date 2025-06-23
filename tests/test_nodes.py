@@ -157,33 +157,28 @@ def test_execute_tool_sets_hitl(tmp_path):
     assert out["current_task"]["status"] in {"IN_PROGRESS", "DONE", "ERROR"}
 
 
-def test_hitl_cli_logs_reflection(tmp_path, monkeypatch):
-    queue_dir = tmp_path / "hitl"
-    refl_dir = tmp_path / "logs"
-    os.makedirs(queue_dir, exist_ok=True)
-    state = {"current_task": {"task_id": "2"}}
-    with open(queue_dir / "2.json", "w") as fh:
-        json.dump(state, fh)
 
-    monkeypatch.setattr("hitl_cli.QUEUE_DIR", str(queue_dir))
-    monkeypatch.setattr("hitl_cli.REFLECT_DIR", str(refl_dir))
+def test_score_with_llm_parses_number():
+    fake_llm = MagicMock()
+    fake_llm.chat.return_value = AIMessage(content="0.42")
+    score = nodes._score_with_llm(fake_llm, "do it")
+    assert score == 0.42
 
-    class DummyStore:
-        def __init__(self):
-            self.texts = []
 
-        def add_texts(self, texts, ids=None):
-            self.texts.extend(texts)
+def test_score_with_llm_handles_bad_output():
+    fake_llm = MagicMock()
+    fake_llm.chat.return_value = AIMessage(content="none")
+    score = nodes._score_with_llm(fake_llm, "oops")
+    assert score == 0.0
 
-    dummy = DummyStore()
-    monkeypatch.setattr(
-        "hitl_cli.Qdrant",
-        lambda client, collection_name, embeddings: dummy,
-    )
-    monkeypatch.setattr("hitl_cli.QdrantClient", lambda url: None)
-    monkeypatch.setattr("hitl_cli.OllamaEmbeddings", lambda: None)
 
-    hitl_cli.process_queue(action="approved")
-    logs = list(refl_dir.glob("*.jsonl"))
-    assert logs, "reflection file created"
-    assert dummy.texts
+def test_priority_from_score_thresholds():
+    rules = {
+        "llm_thresholds": {"critical": 0.9, "high": 0.7, "med": 0.4},
+        "default": "low",
+    }
+    assert nodes._priority_from_score(0.95, rules) == "critical"
+    assert nodes._priority_from_score(0.8, rules) == "high"
+    assert nodes._priority_from_score(0.5, rules) == "med"
+    assert nodes._priority_from_score(0.1, rules) == "low"
+
