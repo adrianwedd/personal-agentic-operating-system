@@ -23,8 +23,11 @@ services:
   langfuse:
     image: ghcr.io/langfuse/langfuse:2.3.1
     ports: ["3000:3000"]
+    platform: linux/arm64/v8  # add if running on Apple Silicon
     volumes:
       - ./data/langfuse:/data
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
   neo4j:
     image: neo4j:5.20
     ports: ["7687:7687"]
@@ -44,7 +47,11 @@ GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 OLLAMA_MODELS=/data/models
 NEO4J_PASSWORD=passw0rd
+LANGFUSE_PUBLIC_KEY=changeme
+LANGFUSE_SECRET_KEY=changeme
 ```
+Copy `.env.example` to `.env` and update values before running `docker compose up`.
+Apple Silicon users should leave `platform: linux/arm64/v8` under the `langfuse` service.
 
 ## 4. Dev Scripts
 Makefile targets expected by agents:
