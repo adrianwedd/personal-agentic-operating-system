@@ -47,6 +47,11 @@ The full reasoning loop follows these stages:
 ├── requirements.txt  # or pyproject.toml
 └── AGENTS.md
 ```
+## 🔨 Dev Environment
+All build/run details live in **DEV_ENV.md**.
+Agents MUST read that file before generating Docker, Python, or CI changes.
+Deviation from those specs is a bug.
+
 
 ## 2. Agent Personas & Responsibilities
 
