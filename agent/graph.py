@@ -1,0 +1,73 @@
+"""LangGraph tying nodes together with HITL checkpoint."""
+from __future__ import annotations
+
+import json
+import os
+from datetime import datetime
+
+from langgraph.graph import StateGraph, END
+from langchain_community.chat_models import ChatOllama
+from langfuse.langchain import CallbackHandler
+from langfuse import Langfuse
+from langchain_core.messages import HumanMessage, AIMessage
+
+from .state import AgentState
+from .nodes import plan_step, prioritise, retrieve_context, execute_tool, generate_response
+
+
+HITL_DIR = "data/hitl_queue"
+
+
+def human_approval(state: AgentState) -> dict:
+    """Serialize state for human approval and pause."""
+    os.makedirs(HITL_DIR, exist_ok=True)
+    task = state.get("current_task")
+    if not task:
+        return {}
+    path = os.path.join(HITL_DIR, f"{task['task_id']}.json")
+    with open(path, "w") as fh:
+        json.dump(state, fh)
+    return {}
+
+
+def build_graph() -> any:
+    graph = StateGraph(AgentState)
+    graph.add_node("plan", plan_step)
+    graph.add_node("prioritise", prioritise)
+    graph.add_node("retrieve", retrieve_context)
+    graph.add_node("execute", execute_tool)
+    graph.add_node("hitl", human_approval)
+    graph.add_node("respond", generate_response)
+
+    graph.set_entry_point("plan")
+    graph.add_edge("plan", "prioritise")
+    graph.add_edge("prioritise", "retrieve")
+    graph.add_edge("retrieve", "execute")
+    graph.add_conditional_edges(
+        "execute",
+        lambda s: "hitl" if s.get("current_task", {}).get("status") == "WAITING_HITL" else "respond",
+    )
+    graph.add_edge("hitl", END)
+    graph.add_edge("respond", END)
+
+    compiled = graph.compile()
+    compiled.get_graph().draw_mermaid_png(output_file_path="agent_graph.png")
+    return compiled
+
+
+compiled_graph = build_graph()
+
+
+def main(prompt: str) -> None:
+    state: AgentState = {"messages": [HumanMessage(content=prompt)], "tasks": [], "context_docs": [], "current_task": None}
+    langfuse = Langfuse()
+    handler = CallbackHandler(langfuse)
+    result = compiled_graph.invoke(state, config={"callbacks": [handler]})
+    final: AIMessage = result["messages"][-1]
+    print(final.content)
+
+
+if __name__ == "__main__":
+    import sys
+
+    main(" ".join(sys.argv[1:]) if len(sys.argv) > 1 else "Hello")

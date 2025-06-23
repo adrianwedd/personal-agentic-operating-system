@@ -6,6 +6,8 @@ from unittest.mock import patch, MagicMock
 from langchain_core.messages import HumanMessage, AIMessage
 
 import agent.nodes as nodes
+import hitl_cli
+import json
 
 
 def test_plan_step_uses_pkg():
@@ -70,7 +72,9 @@ def test_retrieve_context_returns_metadata():
 def test_prioritise_applies_rules():
     state = {"tasks": ["pay invoice"], "messages": []}
     rules = {"patterns": [{"regex": "invoice", "priority": "med"}]}
-    with patch("agent.nodes.load_priority_rules", return_value=rules):
+    with patch("agent.nodes.load_priority_rules", return_value=rules), patch(
+        "agent.nodes.add_task"
+    ):
         out = nodes.prioritise(state)
     t = out["tasks"][0]
     assert t["priority"] == "med"
@@ -84,7 +88,31 @@ def test_prioritise_llm_fallback():
     with patch("agent.nodes.load_priority_rules", return_value={}), patch(
         "agent.nodes.ChatOllama",
         return_value=fake_llm,
-    ):
+    ), patch("agent.nodes.add_task"):
         out = nodes.prioritise(state)
     assert out["tasks"][0]["priority"] == "low"
     assert fake_llm.invoke.called
+
+
+def test_execute_tool_sets_hitl(tmp_path):
+    state = {
+        "tasks": [{"task_id": "1", "objective": "send email", "requires_hitl": True}],
+        "messages": [],
+    }
+    out = nodes.execute_tool(state)
+    assert out["current_task"]["status"] == "WAITING_HITL"
+
+
+def test_hitl_cli_logs_reflection(tmp_path, monkeypatch):
+    queue_dir = tmp_path / "hitl"
+    refl_dir = tmp_path / "reflections"
+    os.makedirs(queue_dir, exist_ok=True)
+    state = {"current_task": {"task_id": "2"}}
+    with open(queue_dir / "2.json", "w") as fh:
+        json.dump(state, fh)
+
+    monkeypatch.setattr("hitl_cli.HITL_DIR", str(queue_dir))
+    monkeypatch.setattr("hitl_cli.REFLECT_DIR", str(refl_dir))
+    hitl_cli.process_queue(action="approved")
+    logs = list(refl_dir.glob("*.jsonl"))
+    assert logs, "reflection file created"
