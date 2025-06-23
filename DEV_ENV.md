@@ -34,6 +34,9 @@ services:
       - ./data/neo4j:/data
 ```
 
+Neo4j loads `constraints.cypher` from `/docker-entrypoint-initdb.d/` on the first
+container start to install PKG constraints.
+
 ## 3. Environment Variables
 Example `.env` values (no secrets):
 ```env
