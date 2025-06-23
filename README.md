@@ -31,6 +31,7 @@ git clone https://github.com/adrianwedd/personal-agentic-operating-system.git
 cd personal-agentic-operating-system
 ./bootstrap.sh                  # 🚀 zero-click setup wizard
 python src/minimal_agent.py "Summarise my inbox"
+make task-api                   # optional REST interface
 ```
 
 > **Tip:** first launch downloads base Ollama model (~3 GB). Subsequent runs are instant.
@@ -76,6 +77,7 @@ Site-rendered docs: <https://adrianwedd.github.io/personal-agentic-operating-sys
 | `make test`| Ruff lint + pytest + coverage gate (80 %) |
 | `make graph`| Render Mermaid PNG of current LangGraph |
 | `make docserve`| Hot-reload MkDocs at <http://127.0.0.1:8000> |
+| `make task-api`| Launch FastAPI task API |
 
 ## 🔄 Meta-agent Schedule
 

@@ -72,3 +72,19 @@ def update_task(task: dict):
     client = QdrantClient(url="http://localhost:6333")
     vs = Qdrant(client=client, collection_name=COLLECTION, embeddings=OllamaEmbeddings())
     vs.add_texts([task["objective"]], ids=[task["task_id"]])
+
+
+def get_task(task_id: str) -> dict | None:
+    conn = sqlite3.connect(DB_PATH)
+    row = conn.execute("SELECT data FROM tasks WHERE task_id=?", (task_id,)).fetchone()
+    conn.close()
+    if row:
+        return json.loads(row[0])
+    return None
+
+
+def list_tasks() -> list[dict]:
+    conn = sqlite3.connect(DB_PATH)
+    rows = conn.execute("SELECT data FROM tasks").fetchall()
+    conn.close()
+    return [json.loads(r[0]) for r in rows]

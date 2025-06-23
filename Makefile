@@ -12,13 +12,17 @@ ruff:
 	ruff check .
 
 
-.PHONY: dev graph test ruff hitl meta-agent
+.PHONY: dev graph test ruff hitl meta-agent task-api
 
 hitl:
 	python src/hitl_cli.py
 
 meta-agent:
 	python scripts/run_meta_agent.py
+
+
+task-api:
+	uvicorn src.task_api:app --reload --port 8001
 
 
 
