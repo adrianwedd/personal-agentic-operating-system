@@ -21,7 +21,7 @@ CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
 
 
-def get_text_chunks(docs: Iterable) -> List[str]:
+def get_text_chunks(docs: Iterable) -> List:
     """Wrapper for the dynamic embedding pipeline."""
     return split_documents(docs)
 
@@ -38,13 +38,16 @@ def ingest(gmail_query: str | None = None, directory: str | None = None) -> None
         print("No documents loaded")
         return
 
-    texts = get_text_chunks(documents)
+    chunks = get_text_chunks(documents)
+
+    texts = [d.page_content for d in chunks]
+    metas = [d.metadata for d in chunks]
 
     embeddings = OllamaEmbeddings()
     client = QdrantClient(url=os.environ.get("QDRANT_URL", "http://localhost:6333"))
     vectorstore = Qdrant(client=client, collection_name="ingestion", embeddings=embeddings)
 
-    ids = vectorstore.add_texts(texts)
+    ids = vectorstore.add_texts(texts, metadatas=metas)
     print(f"Stored {len(ids)} chunks in Qdrant collection 'ingestion'")
 
 

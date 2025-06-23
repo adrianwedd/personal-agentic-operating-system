@@ -14,6 +14,7 @@ def test_get_text_chunks():
     docs = [Document(page_content="a" * 1500)]
     chunks = get_text_chunks(docs)
     assert len(chunks) > 1
+    assert all(c.metadata["split_strategy"] == "recursive" for c in chunks)
 
 
 def test_ingest_pipeline():
@@ -28,6 +29,9 @@ def test_ingest_pipeline():
         mock_vs.add_texts.return_value = ["1"]
         ingest("test", "./data")
         assert mock_vs.add_texts.called
+        _, kwargs = mock_vs.add_texts.call_args
+        assert "metadatas" in kwargs
+        assert kwargs["metadatas"][0]["split_strategy"]
 
 
 def test_llm_graph_transformer_schema():
