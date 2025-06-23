@@ -10,10 +10,14 @@ from neo4j import GraphDatabase
 from langfuse import Langfuse
 from langfuse.langchain import CallbackHandler
 
+from .pkg_config import (
+    ALLOWED_NODE_TYPES,
+    ALLOWED_EDGE_TYPES,
+    install_constraints,
+)
+
 from .loaders import load_gmail, load_files
 
-ALLOWED_NODES = ["Person", "Company", "Project", "Document"]
-ALLOWED_RELATIONSHIPS = ["works_on", "communicates_with", "mentions"]
 
 
 def _load_docs(gmail_query: str | None, directory: str | None):
@@ -25,17 +29,21 @@ def _load_docs(gmail_query: str | None, directory: str | None):
     return docs
 
 
-def _store_triples(triples: List[Tuple[str, str, str]]) -> None:
+def _store_triples(triples: List[Tuple[str, str, str, str, str]]) -> None:
     driver = GraphDatabase.driver(
         os.environ.get("NEO4J_URL", "bolt://localhost:7687"),
         auth=("neo4j", os.environ.get("NEO4J_PASSWORD", "password")),
     )
     with driver.session() as session:
-        for s, r, t in triples:
+        session.execute_write(install_constraints)
+        for s, stype, r, t, ttype in triples:
             session.run(
-                f"MERGE (a {{id:$s}}) MERGE (b {{id:$t}}) MERGE (a)-[:{r}]->(b)",
-                s=s,
-                t=t,
+                f"""
+                MERGE (s:{stype} {{name:$s}})
+                MERGE (o:{ttype} {{name:$o}})
+                MERGE (s)-[:{r}]->(o)
+                """,
+                {"s": s, "o": t},
             )
 
 
@@ -49,8 +57,8 @@ def build_pkg(gmail_query: str | None = None, directory: str | None = None) -> N
     llm = ChatOllama()
     transformer = LLMGraphTransformer(
         llm=llm,
-        allowed_nodes=ALLOWED_NODES,
-        allowed_relationships=ALLOWED_RELATIONSHIPS,
+        allowed_nodes=list(ALLOWED_NODE_TYPES),
+        allowed_relationships=list(ALLOWED_EDGE_TYPES),
     )
     langfuse = Langfuse()
     handler = CallbackHandler(langfuse)
@@ -58,13 +66,27 @@ def build_pkg(gmail_query: str | None = None, directory: str | None = None) -> N
         docs, config={"callbacks": [handler]}
     )
 
-    triples: List[Tuple[str, str, str]] = []
+    triples: List[Tuple[str, str, str, str, str]] = []
     for gdoc in graph_docs:
         for rel in gdoc.relationships:
-            triples.append((rel.source.id, rel.type, rel.target.id))
+            if (
+                rel.type in ALLOWED_EDGE_TYPES
+                and rel.source.type in ALLOWED_NODE_TYPES
+                and rel.target.type in ALLOWED_NODE_TYPES
+            ):
+                triples.append(
+                    (
+                        rel.source.id,
+                        rel.source.type,
+                        rel.type,
+                        rel.target.id,
+                        rel.target.type,
+                    )
+                )
 
     _store_triples(triples)
     print(f"Stored {len(triples)} triples in Neo4j")
+    return len(triples)
 
 
 if __name__ == "__main__":
@@ -75,4 +97,5 @@ if __name__ == "__main__":
     parser.add_argument("--directory", default=None)
     args = parser.parse_args()
 
-    build_pkg(args.gmail_query, args.directory)
+    added = build_pkg(args.gmail_query, args.directory)
+    print(f"added {added} triples")
