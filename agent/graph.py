@@ -64,11 +64,11 @@ def build_graph() -> any:
     graph.add_edge("respond", END)
 
     compiled = graph.compile()
-    os.makedirs("docs", exist_ok=True)
+    os.makedirs("docs/architecture", exist_ok=True)
     try:
-        compiled.get_graph().draw_mermaid_png("docs/langgraph.png")
+        compiled.get_graph().draw_mermaid_png("docs/architecture/langgraph_flow.png")
     except Exception:
-        open("docs/langgraph.png", "wb").close()
+        open("docs/architecture/langgraph_flow.png", "wb").close()
     return compiled
 
 

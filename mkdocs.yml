@@ -1,0 +1,40 @@
+site_name: Personal Agentic OS
+repo_url: https://github.com/you/agent-os
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.instant
+    - content.code.copy
+    - content.action.edit
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - attr_list
+plugins:
+  - search
+  - mermaid2
+  - git-revision-date-localized
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_root_toc_entry: false
+            merge_init_into_class: true
+nav:
+  - "\U0001F3E0 Home": index.md
+  - "\U0001F680 Quick-start": quickstart.md
+  - "\U0001F9E9 Architecture":
+      - Overview: architecture/overview.md
+      - LangGraph flow: architecture/langgraph_flow.md
+  - "\U0001F469\u200D\U0001F4BB Developer Guides":
+      - Ingestion Pipeline: guides/ingestion_pipeline.md
+      - HITL Workflow: guides/hitl_workflow.md
+      - Deployment: guides/deployment.md
+  - "\U0001F52C API Reference": api/
+  - "\U0001F5D2 Changelog": changelog.md
+  - "\U0001F4DC Core Specs":
+      - Agents: ../AGENTS.md
+      - Task Contract: ../TASKS.md
+      - Dev Environment: ../DEV_ENV.md
