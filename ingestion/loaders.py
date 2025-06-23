@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import List
 
 from langchain_google_community import GMailLoader
-from langchain_community.document_loaders import DirectoryLoader
+from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_core.documents import Document
 
 
@@ -26,5 +26,5 @@ def load_gmail(query: str | None = None, *, label: str | None = None, max_result
 
 def load_files(path: str) -> List[Document]:
     """Load documents from a local directory."""
-    loader = DirectoryLoader(path)
+    loader = DirectoryLoader(path, loader_cls=TextLoader)
     return loader.load()

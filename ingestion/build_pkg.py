@@ -10,13 +10,24 @@ from neo4j import GraphDatabase
 from langfuse import Langfuse
 from langfuse.langchain import CallbackHandler
 
-from .pkg_config import (
-    ALLOWED_NODE_TYPES,
-    ALLOWED_EDGE_TYPES,
-    install_constraints,
-)
+# Support running as a script (`python ingestion/build_pkg.py`) or module
+if __package__:
+    from .pkg_config import (
+        ALLOWED_NODE_TYPES,
+        ALLOWED_EDGE_TYPES,
+        install_constraints,
+    )
+else:  # pragma: no cover - direct script execution
+    from pkg_config import (  # type: ignore
+        ALLOWED_NODE_TYPES,
+        ALLOWED_EDGE_TYPES,
+        install_constraints,
+    )
 
-from .loaders import load_gmail, load_files
+    from loaders import load_gmail, load_files  # type: ignore
+
+if __package__:
+    from .loaders import load_gmail, load_files
 
 
 
