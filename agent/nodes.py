@@ -15,10 +15,11 @@ from datetime import datetime
 from .state import AgentState
 from .tasks_db import add_task
 from langgraph.prebuilt import ToolNode
+from . import tools as agent_tools
 from utils.token_counter import trim_messages, count_message_tokens
 from .retrieve_context import query_pkg, filter_qdrant_by_entities
 
-tool_node = ToolNode([])
+tool_node = ToolNode(agent_tools.build_action_tools())
 
 
 def remaining_steps(task: dict) -> bool:
