@@ -1,85 +1,90 @@
-# Personal Agentic Operating System
+# 🧩 Personal Agentic Operating System
+<p align="center">
+  <img src="docs/_assets/logo.svg" width="120" alt="PAOS logo"/>
+</p>
 
-This repository contains notes and guides for building an on-premise LangGraph-based agentic OS.
+> **Local-first LLM agents, orchestrated with LangGraph, powered by Qdrant & Neo4j, observable via Langfuse.**
 
-## Docs
-- [AGENTS.md](AGENTS.md) – personas and contribution rules
-- [DEV_ENV.md](DEV_ENV.md) – development environment setup
-- [TASKS.md](TASKS.md) – canonical task model
+[![CI](https://github.com/adrianwedd/personal-agentic-operating-system/actions/workflows/ci.yml/badge.svg)](./actions/workflows/ci.yml)
+[![Docker Pulls](https://img.shields.io/docker/pulls/agentos/core?logo=docker)](https://github.com/users/adrianwedd/packages)
+[![Docs](https://img.shields.io/badge/docs-latest-success?logo=readthedocs)](https://adrianwedd.github.io/personal-agentic-operating-system/)
 
-Use `make dev` to start services and install dependencies. See `DEV_ENV.md` for details.
+---
 
-## Ingestion
-The `ingestion` package contains an offline script for loading data into Qdrant. It supports Gmail messages and local files.
+## 🚀 Features
 
-Run it with:
+| Capability | Detail |
+|------------|--------|
+| **On-prem, private** | All services run in Docker on your machine. No external API calls required. |
+| **Task-centric LangGraph** | Planner → Prioritise → PKG + Vector RAG → Tool execution → HITL checkpoint. |
+| **Hybrid Retrieval** | Step-1 Neo4j entity lookup, Step-2 Qdrant metadata-filtered vector search. |
+| **Self-improvement loop** | Reflection docs → meta-agent → updated guidelines injected at runtime. |
+| **Observability** | Langfuse traces every node/tool; Mermaid graph rendered on each build. |
 
-```bash
-python -m ingestion.ingest --gmail-query "is:inbox" --directory ./docs
-```
+---
 
-The script splits documents with `RecursiveCharacterTextSplitter`, generates embeddings via the local Ollama model, and stores them in the `ingestion` collection in Qdrant.
-
-## Retrieval
-`rag_agent.py` provides a simple RAG example. It queries the `ingestion` collection using a Qdrant retriever and feeds the results to a local LLM. Run it with:
-
-```bash
-python -m rag_agent "What do my docs say?"
-```
-
-## Tool Execution
-`tool_agent.py` shows how the agent can take real actions using Gmail and Google Calendar. It uses LangChain's `GmailToolkit` and `CalendarToolkit`.
-
-Run it with:
+## 🏃‍♂️ Quick-start
 
 ```bash
-python -m tool_agent "Draft a reply to Jane and schedule a meeting tomorrow"
+git clone https://github.com/adrianwedd/personal-agentic-operating-system.git
+cd personal-agentic-operating-system
+cp .env.example .env            # → edit secrets
+make dev                        # pulls images, installs deps
+python src/minimal_agent.py "Summarise my inbox"
 ```
 
-## Graph-Based Planning & Task Management
-The planner now incorporates results from the Personal Knowledge Graph. Ambiguous
-requests are clarified and tasks are prioritized automatically.
+> **Tip:** first launch downloads base Ollama model (~3 GB). Subsequent runs are instant.
 
-Example:
+---
 
-```bash
-python -m tool_agent "Email Jane"
+## 🗺 System Architecture
+
+```mermaid
+graph LR
+  subgraph Ingestion
+    Loader-->Splitter-->Embedder-->Qdrant
+    Loader-->LLMGraphTransformer-->Neo4j
+  end
+  User-->LangGraph
+  LangGraph-->|RAG|Qdrant
+  LangGraph-->|Entities|Neo4j
+  LangGraph-->|Trace|Langfuse
+  LangGraph-->HITL[Human Approval]
 ```
 
-If the PKG contains Jane's address, the plan will generate
-`draft_email(to='jane.d@example.com')`. Incoming emails matching rules in
-`rules/priority.yml` will be elevated without calling the LLM.
+Full interactive diagram lives at **docs/architecture/langgraph_flow.md**.
 
-## Testing
-A suite of unit tests is provided under `tests/`. Run them with:
+---
 
-```bash
-make test
-```
+## 📑 Core Docs
 
-For manual validation, follow these sprint-specific checks:
+| Doc | Purpose |
+|-----|---------|
+| `AGENTS.md` | Personas & responsibilities |
+| `TASKS.md`  | Task schema & lifecycle |
+| `DEV_ENV.md`| Setup expectations |
 
-1. **Sprint 0 – Environment Setup**
-   - `docker compose up` then `docker ps` to confirm all containers are healthy.
-   - Verify API access: `curl http://localhost:11434/api/tags` and open the Qdrant and Langfuse UIs in the browser.
-   - Run `minimal_agent.py` and check Langfuse for a captured trace.
-2. **Sprint 1 – Ingestion Pipeline**
-   - On first run of `ingestion/ingest.py`, complete the OAuth flow and ensure `token.json` is created.
-   - After ingestion, confirm vectors exist in Qdrant via its dashboard.
-3. **Sprint 2 – Memory Core (RAG)**
-   - Query `rag_agent.py` with known keywords and semantic questions and verify relevant documents are returned.
-   - Inspect Langfuse traces to see the `retrieve_context` node outputs.
-4. **Sprint 3 – Action Engine (Tools)**
-   - Use `tool_agent.py` to schedule a calendar event and draft an email. Confirm the actions in Google Calendar and Gmail Drafts.
-5. **Sprint 4 – Personal Knowledge Graph**
-   - Run `ingestion/build_pkg.py` and verify a Langfuse trace was recorded.
-   - Inspect Neo4j to confirm `Person`, `Company`, and `Project` nodes exist.
-   - Query `rag_agent.py` and check that answers reference these entities.
-6. **Sprint 5 – Graph Planning & Task Rules**
-   - Verify `plan_step` queries the PKG to expand requests like "Email Jane" into concrete tool calls.
-   - Send yourself an email with subject "Invoice" and ensure the `prioritise` node marks it `med` priority without an LLM call.
-7. **Sprint 6 – HITL & Meta-Agent**
-   - Run the graph in `agent/graph.py` and ensure a task with `requires_hitl` writes a file under `data/hitl_queue/`.
-   - Execute `make hitl` to approve the task and check a reflection entry is added in `data/reflections/`.
-   - Run `python -m agent.meta_agent` and verify `guidelines.txt` is updated.
+Site-rendered docs: <https://adrianwedd.github.io/personal-agentic-operating-system/>
+
+---
+
+## 🧑‍💻 Developer Workflow
+
+| Command | Action |
+|---------|--------|
+| `make dev` | Start Docker stack + install Python libs |
+| `make test`| Ruff lint + pytest + coverage gate (80 %) |
+| `make graph`| Render Mermaid PNG of current LangGraph |
+| `make docserve`| Hot-reload MkDocs at <http://127.0.0.1:8000> |
+
+---
+
+## 🏗 Contributing
+
+1. Create feature branch `codex/my-feature`.  
+2. Add or update tasks in `.codex/tasks.yml` (Codex agents monitor this).  
+3. Ensure `make test` & `make docbuild` are green.  
+4. Open PR; the CI bot will auto-label based on task IDs.  
+
+Happy hacking! 🛠
 
