@@ -11,7 +11,10 @@ test: ruff
 ruff:
 	ruff check .
 
-.PHONY: dev graph test ruff
+.PHONY: dev graph test ruff hitl
+
+hitl:
+	python src/hitl_cli.py
 
 
 
