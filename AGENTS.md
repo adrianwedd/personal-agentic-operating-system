@@ -14,6 +14,7 @@ This project aims to build a personal, on-premise agentic operating system. The 
   * **Modularity:** The system is broken down into distinct services. The core logic is orchestrated by **LangGraph**, which provides granular control over the agent's state and execution flow. [1, 2, 3]
   * **Separation of Concerns:** We distinguish between planning ("what to do") and execution ("how to do it"). A dedicated planner node decomposes tasks, which are then executed by specialized tool-using or retrieval nodes.
   * **Structured Context:** Raw data is not enough. The system is designed to transform unstructured data (emails, files) into structured, actionable context through a **Personal Knowledge Graph (PKG)** and a **Vector Store**. [4, 5]
+  * **Tasks Are the Canonical Unit:** See [TASKS.md](TASKS.md) for the schema, lifecycle, and rule system. Agents **MUST** comply with those definitions when creating, updating, or querying tasks.
 
 
 ## Agentic System Execution Lifecycle
