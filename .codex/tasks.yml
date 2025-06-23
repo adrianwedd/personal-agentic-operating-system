@@ -148,6 +148,15 @@ tasks:
     acceptance_criteria:
       - `docker compose up -d` on M-series Mac shows all containers healthy.
 
+  - id: INF-LF-1b
+    title: "Auto-generate Langfuse secrets in bootstrap script"
+    ⏳: 0.2h 🔥 ⚙️
+    description: |
+      • Modify bootstrap.sh to append NEXTAUTH_SECRET and SALT
+        when they’re missing or blank.
+    acceptance_criteria:
+      - Re-running ./bootstrap.sh with empty .env brings up langfuse healthy.
+
   - id: DOC-1
     title: "Replace README with badge-rich, quick-start version"
     ⏳: 0.5h 📚

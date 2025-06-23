@@ -51,6 +51,13 @@ fi
 if [[ ! -f .env ]]; then
     yellow "📄  Creating fresh .env from template…"
     cp .env.example .env
+    # --- generate one-time secrets if not present ---
+    {
+        grep -q "^NEXTAUTH_SECRET=" .env || \
+            echo "NEXTAUTH_SECRET=$(openssl rand -hex 16)" >> .env
+        grep -q "^SALT=" .env || \
+            echo "SALT=$(openssl rand -hex 16)" >> .env
+    }
     sed -i'' "s/POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 8)/" .env 2>/dev/null || \
         sed -i "s/POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 8)/" .env
     sed -i'' "s/NEO4J_PASSWORD=.*/NEO4J_PASSWORD=$(openssl rand -hex 8)/" .env 2>/dev/null || \
@@ -58,6 +65,12 @@ if [[ ! -f .env ]]; then
     green "✅ .env created – customise anytime."
 else
     green "📄  Existing .env detected – keeping your settings."
+    if grep -q "^NEXTAUTH_SECRET=$" .env || ! grep -q "^NEXTAUTH_SECRET=" .env; then
+        echo "NEXTAUTH_SECRET=$(openssl rand -hex 16)" >> .env
+    fi
+    if grep -q "^SALT=$" .env || ! grep -q "^SALT=" .env; then
+        echo "SALT=$(openssl rand -hex 16)" >> .env
+    fi
 fi
 
 # 6️⃣  ARM warning for Langfuse < 2.58
