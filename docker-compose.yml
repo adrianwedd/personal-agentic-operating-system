@@ -1,4 +1,3 @@
-version: '3.9'
 services:
   ollama:
     image: ollama/ollama:0.2.0           # ← pin
@@ -15,12 +14,13 @@ services:
       - ./data/qdrant:/qdrant/storage
     networks: ["agentnet"]
   langfuse:
-    image: ghcr.io/langfuse/langfuse:2.3.1  # ← pin
+    image: ghcr.io/langfuse/langfuse:3.74.0  # multi-arch
     container_name: langfuse
     ports: ["3000"]                       # internal only
-    platform: linux/arm64/v8
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      SALT: ${SALT}
       # keys injected via .env
     networks: ["agentnet"]
   postgres:

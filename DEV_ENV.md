@@ -21,13 +21,14 @@ services:
     volumes:
       - ./data/qdrant:/qdrant/storage
   langfuse:
-    image: ghcr.io/langfuse/langfuse:2.3.1
+    image: ghcr.io/langfuse/langfuse:3.74.0
     ports: ["3000:3000"]
-    platform: linux/arm64/v8  # add if running on Apple Silicon
     volumes:
       - ./data/langfuse:/data
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      SALT: ${SALT}
   neo4j:
     image: neo4j:5.20
     ports: ["7687:7687"]
@@ -49,9 +50,12 @@ OLLAMA_MODELS=/data/models
 NEO4J_PASSWORD=passw0rd
 LANGFUSE_PUBLIC_KEY=changeme
 LANGFUSE_SECRET_KEY=changeme
+NEXTAUTH_SECRET=0123456789abcdef0123456789abcdef
+SALT=fedcba9876543210fedcba9876543210
+DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
 ```
 Copy `.env.example` to `.env` and update values before running `docker compose up`.
-Apple Silicon users should leave `platform: linux/arm64/v8` under the `langfuse` service.
+The Langfuse image is multi-arch, so no `platform:` override is required on Apple Silicon.
 
 ## 4. Dev Scripts
 Makefile targets expected by agents:
