@@ -1,0 +1,6 @@
+bank_whitelist:
+  - trustedbank.com
+patterns:
+  - regex: "(?i)invoice"
+    priority: med
+default: low

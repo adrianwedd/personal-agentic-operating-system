@@ -24,7 +24,8 @@ def test_plan_step_uses_pkg():
 
 
 def test_plan_step_includes_email_metadata():
-    state = {"messages": [HumanMessage(content="email Jane")]} 
+    state = {"messages": [HumanMessage(content="email Jane")]}
+
     class FakeLLM:
         def __init__(self):
             self.last_input = None
@@ -64,3 +65,26 @@ def test_retrieve_context_returns_metadata():
         out = nodes.retrieve_context(state)
     assert out["context_docs"] == ["hi"]
     assert out["graph_metadata"] == [{"doc_id": "1", "entity": "Alice"}]
+
+
+def test_prioritise_applies_rules():
+    state = {"tasks": ["pay invoice"], "messages": []}
+    rules = {"patterns": [{"regex": "invoice", "priority": "med"}]}
+    with patch("agent.nodes.load_priority_rules", return_value=rules):
+        out = nodes.prioritise(state)
+    t = out["tasks"][0]
+    assert t["priority"] == "med"
+    assert t["status"] == "READY"
+
+
+def test_prioritise_llm_fallback():
+    state = {"tasks": ["other task"], "messages": []}
+    fake_llm = MagicMock()
+    fake_llm.invoke.return_value = AIMessage(content="low")
+    with patch("agent.nodes.load_priority_rules", return_value={}), patch(
+        "agent.nodes.ChatOllama",
+        return_value=fake_llm,
+    ):
+        out = nodes.prioritise(state)
+    assert out["tasks"][0]["priority"] == "low"
+    assert fake_llm.invoke.called
