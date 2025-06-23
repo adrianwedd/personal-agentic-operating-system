@@ -11,10 +11,10 @@ The config lowers the log level to `information`, limits background threads and 
 
 ## Pruning helper
 
-Run `scripts/prune-system-logs.sh` occasionally (or via cron) to enforce the 3‑day TTL and reclaim disk space:
+Run `scripts/prune_clickhouse_system_tables.sh` occasionally (or via cron) to enforce the 3‑day TTL and reclaim disk space:
 
 ```bash
-$ docker exec clickhouse-server /scripts/prune-system-logs.sh
+$ docker exec clickhouse-server /scripts/prune_clickhouse_system_tables.sh
 ```
 
 This script modifies the TTL on ClickHouse's system logs and performs a `FINAL` optimize.

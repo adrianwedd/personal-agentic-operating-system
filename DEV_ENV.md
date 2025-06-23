@@ -78,6 +78,21 @@ Use VS Code Remote-Containers with `.devcontainer/devcontainer.json` if availabl
 - `./data/ollama/`
 - `./logs/langgraph/`
 
+## ClickHouse for Langfuse v3+
+
+Langfuse v3 and newer relies on ClickHouse. A development tuned configuration
+is provided at `docker/clickhouse/config.xml` and keeps system logs compact while
+reducing background thread usage. Copy this file into your container (Docker
+Compose does this automatically) to apply the defaults.
+
+To enforce a 3‑day TTL on ClickHouse's system logs, run:
+
+```bash
+bash scripts/prune_clickhouse_system_tables.sh
+```
+
+See `tests/test_clickhouse_dev_defaults.py` for verification of these settings.
+
 ## 8. Offline/Air-Gap Notes
 Run `make pull-models` before going offline. If using a mirror registry, update `docker-compose.yml` accordingly.
 

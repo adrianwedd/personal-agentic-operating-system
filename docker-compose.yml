@@ -49,6 +49,7 @@ services:
     volumes:
       - ./data/clickhouse:/var/lib/clickhouse
       - ./logs/clickhouse:/var/log/clickhouse-server
+      - ./docker/clickhouse/config.xml:/etc/clickhouse-server/config.d/dev-overrides.xml:ro
     networks: ["agentnet"]
   neo4j:
     image: neo4j:5.20
