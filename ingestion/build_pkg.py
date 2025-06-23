@@ -40,6 +40,35 @@ def _load_docs(gmail_query: str | None, directory: str | None):
     return docs
 
 
+def _convert_filter(
+    transformer: LLMGraphTransformer,
+    docs,
+    handler: CallbackHandler,
+) -> List[Tuple[str, str, str, str, str]]:
+    """Convert docs to triples and filter out unsupported types."""
+    graph_docs = transformer.convert_to_graph_documents(
+        docs, config={"callbacks": [handler]}
+    )
+    triples: List[Tuple[str, str, str, str, str]] = []
+    for gdoc in graph_docs:
+        for rel in gdoc.relationships:
+            if (
+                rel.type in ALLOWED_EDGE_TYPES
+                and rel.source.type in ALLOWED_NODE_TYPES
+                and rel.target.type in ALLOWED_NODE_TYPES
+            ):
+                triples.append(
+                    (
+                        rel.source.id,
+                        rel.source.type,
+                        rel.type,
+                        rel.target.id,
+                        rel.target.type,
+                    )
+                )
+    return triples
+
+
 def _store_triples(triples: List[Tuple[str, str, str, str, str]]) -> None:
     driver = GraphDatabase.driver(
         os.environ.get("NEO4J_URL", "bolt://localhost:7687"),
@@ -73,27 +102,7 @@ def build_pkg(gmail_query: str | None = None, directory: str | None = None) -> N
     )
     langfuse = Langfuse()
     handler = CallbackHandler(langfuse)
-    graph_docs = transformer.convert_to_graph_documents(
-        docs, config={"callbacks": [handler]}
-    )
-
-    triples: List[Tuple[str, str, str, str, str]] = []
-    for gdoc in graph_docs:
-        for rel in gdoc.relationships:
-            if (
-                rel.type in ALLOWED_EDGE_TYPES
-                and rel.source.type in ALLOWED_NODE_TYPES
-                and rel.target.type in ALLOWED_NODE_TYPES
-            ):
-                triples.append(
-                    (
-                        rel.source.id,
-                        rel.source.type,
-                        rel.type,
-                        rel.target.id,
-                        rel.target.type,
-                    )
-                )
+    triples = _convert_filter(transformer, docs, handler)
 
     _store_triples(triples)
     print(f"Stored {len(triples)} triples in Neo4j")
