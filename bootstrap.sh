@@ -102,6 +102,9 @@ bold ""
 green "🎉  All services requested. Quick status:"
 docker compose ps --format "table {{.Name}}\t{{.State}}\t{{.Ports}}"
 
+# Friendly URL cheat-sheet
+scripts/print_service_urls.sh "$@"
+
 bold ""
 bold "👟  Next steps"
 cat <<EOT
