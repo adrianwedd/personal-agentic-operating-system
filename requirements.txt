@@ -1,4 +1,6 @@
 langchain
+langchain-core
+langchain-text-splitters
 langgraph
 langchain-openai
 langchain-community

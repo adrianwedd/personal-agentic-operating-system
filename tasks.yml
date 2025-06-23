@@ -1,6 +1,6 @@
 - id: sprint1_ingestion
   description: Build the ingestion pipeline using Gmail and filesystem loaders, split text, generate embeddings, and store them in Qdrant.
-  status: todo
+  status: done
 - id: sprint2_retrieval
   description: Integrate Qdrant retrieval using hybrid search to answer questions from stored documents.
   status: todo
