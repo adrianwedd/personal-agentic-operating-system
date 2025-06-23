@@ -6,7 +6,7 @@
   status: done
 - id: sprint3_tool_execution
   description: Add GmailToolkit and GoogleCalendarToolkit to enable the agent to send drafts and schedule events.
-  status: todo
+  status: done
 - id: extend_pkg
   description: Extend retrieval with a Personal Knowledge Graph powered by LLMGraphTransformer.
   status: todo

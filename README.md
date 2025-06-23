@@ -26,3 +26,12 @@ The script splits documents with `RecursiveCharacterTextSplitter`, generates emb
 ```bash
 python -m rag_agent "What do my docs say?"
 ```
+
+## Tool Execution
+`tool_agent.py` shows how the agent can take real actions using Gmail and Google Calendar. It uses LangChain's `GmailToolkit` and `CalendarToolkit`.
+
+Run it with:
+
+```bash
+python -m tool_agent "Draft a reply to Jane and schedule a meeting tomorrow"
+```
