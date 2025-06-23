@@ -6,9 +6,17 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 
 def test_trim_messages_basic():
-    msgs = [SystemMessage(content="a" * 10), HumanMessage(content="b" * 10)]
+    msgs = [SystemMessage(content="a"), HumanMessage(content="b")]
     trimmed = tc.trim_messages(msgs, max_tokens=1)
     assert len(trimmed) == 1
     assert isinstance(trimmed[0], HumanMessage)
+
+
+def test_trim_long_prompt():
+    long_text = "x " * 12000
+    msgs = [HumanMessage(content=long_text)]
+    trimmed = tc.trim_messages(msgs)
+    total = tc.count_message_tokens(trimmed)
+    assert total <= 8192
 
 
