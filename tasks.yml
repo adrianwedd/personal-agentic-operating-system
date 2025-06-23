@@ -3,7 +3,7 @@
   status: done
 - id: sprint2_retrieval
   description: Integrate Qdrant retrieval using hybrid search to answer questions from stored documents.
-  status: todo
+  status: done
 - id: sprint3_tool_execution
   description: Add GmailToolkit and GoogleCalendarToolkit to enable the agent to send drafts and schedule events.
   status: todo

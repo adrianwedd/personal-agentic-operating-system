@@ -13,12 +13,12 @@ class AgentState(TypedDict):
     messages: List[HumanMessage]
 
 
-def ollama_step(state: AgentState) -> AgentState:
+def ollama_step(state: AgentState) -> dict:
+    """Call the local model and return an updated messages list."""
     llm = ChatOllama()
     last = state["messages"][-1]
     response = llm.invoke([last])
-    state["messages"].append(response)
-    return state
+    return {"messages": state["messages"] + [response]}
 
 
 def main(prompt: str) -> None:
