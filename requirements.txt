@@ -8,6 +8,8 @@ langchain-google-community
 ollama
 qdrant-client
 langfuse
+langchain-experimental
+neo4j
 fastapi
 uvicorn
 pytest

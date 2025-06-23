@@ -57,4 +57,8 @@ For manual validation, follow these sprint-specific checks:
    - Inspect Langfuse traces to see the `retrieve_context` node outputs.
 4. **Sprint 3 – Action Engine (Tools)**
    - Use `tool_agent.py` to schedule a calendar event and draft an email. Confirm the actions in Google Calendar and Gmail Drafts.
+5. **Sprint 4 – Personal Knowledge Graph**
+   - Run `ingestion/build_pkg.py` and verify a Langfuse trace was recorded.
+   - Inspect Neo4j to confirm `Person`, `Company`, and `Project` nodes exist.
+   - Query `rag_agent.py` and check that answers reference these entities.
 
