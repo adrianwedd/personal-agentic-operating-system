@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import argparse
 import glob
 import json
 import os
 import time
 from datetime import datetime
+
 import portalocker
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import Qdrant
@@ -61,5 +63,35 @@ def process_queue(action: str = "approved") -> None:
     print(f"Task {task.get('task_id')} {action}")
 
 
+def list_queue() -> None:
+    """Print pending HITL items."""
+    files = glob.glob(os.path.join(QUEUE_DIR, "*.json"))
+    if not files:
+        print("No pending items")
+        return
+    for fp in files:
+        with open(fp) as fh:
+            state = json.load(fh)
+        task = state.get("current_task", {})
+        print(f"{task.get('task_id')}: {task.get('objective', 'no objective')}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Process HITL queue")
+    parser.add_argument(
+        "command",
+        choices=["list", "approve", "reject"],
+        nargs="?",
+        default="list",
+        help="Action to perform",
+    )
+    args = parser.parse_args()
+
+    if args.command == "list":
+        list_queue()
+    else:
+        process_queue(action="approved" if args.command == "approve" else "rejected")
+
+
 if __name__ == "__main__":
-    process_queue()
+    main()
