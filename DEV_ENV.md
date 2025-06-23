@@ -25,6 +25,13 @@ services:
     ports: ["3000:3000"]
     volumes:
       - ./data/langfuse:/data
+  neo4j:
+    image: neo4j:5.20
+    ports: ["7687:7687"]
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
+    volumes:
+      - ./data/neo4j:/data
 ```
 
 ## 3. Environment Variables
@@ -33,6 +40,7 @@ Example `.env` values (no secrets):
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 OLLAMA_MODELS=/data/models
+NEO4J_PASSWORD=passw0rd
 ```
 
 ## 4. Dev Scripts

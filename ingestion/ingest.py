@@ -4,10 +4,11 @@ from __future__ import annotations
 import os
 from typing import Iterable, List
 
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import Qdrant
 from qdrant_client import QdrantClient
+
+from .embedding_pipeline import split_documents
 
 from .loaders import load_gmail, load_files
 
@@ -17,8 +18,8 @@ CHUNK_OVERLAP = 200
 
 
 def get_text_chunks(docs: Iterable) -> List[str]:
-    splitter = RecursiveCharacterTextSplitter(chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
-    return [chunk.page_content for chunk in splitter.split_documents(list(docs))]
+    """Wrapper for the dynamic embedding pipeline."""
+    return split_documents(docs)
 
 
 def ingest(gmail_query: str | None = None, directory: str | None = None) -> None:

@@ -33,6 +33,15 @@ services:
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     networks: ["agentnet"]
+  neo4j:
+    image: neo4j:5.20
+    container_name: neo4j
+    ports: ["7687"]                       # internal only
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
+    volumes:
+      - ./data/neo4j:/data
+    networks: ["agentnet"]
 
 networks:
   agentnet:
