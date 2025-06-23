@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import List, Dict, Any
 
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
-from langchain_community.chat_models import ChatOllama
+from agent.llm_providers import get_default_client
 import os
 import re
 import yaml
@@ -63,7 +63,7 @@ def plan_step(state: AgentState) -> Dict[str, Any]:
         else:
             parts.append(m["entity"])
     context = ", ".join(parts)
-    llm = ChatOllama()
+    llm = get_default_client()
     user_prompt = (
         f"Known entities: {context}\nUser request: {prompt}\nPlan as bullet list."
     )
@@ -76,7 +76,7 @@ def plan_step(state: AgentState) -> Dict[str, Any]:
     trimmed = trim_messages(messages)
     after = count_message_tokens(trimmed)
     meta_info = {"trimmed": True, "token_delta": before - after} if after < before else {}
-    ai: AIMessage = llm.invoke(trimmed, config={"metadata": meta_info})
+    ai: AIMessage = llm.chat(trimmed, metadata=meta_info)
     tasks = [t.strip("- ") for t in ai.content.splitlines() if t.strip()]
     return {"tasks": tasks}
 
@@ -110,7 +110,7 @@ def apply_deterministic_rules(
 def prioritise(state: AgentState) -> Dict[str, Any]:
     """Assign priority using deterministic rules then LLM."""
     rules = load_priority_rules()
-    llm = ChatOllama()
+    llm = get_default_client()
 
     if state.get("current_task"):
         task = state["current_task"]
@@ -120,7 +120,7 @@ def prioritise(state: AgentState) -> Dict[str, Any]:
         if pr is None:
             prompt = f"Task: {obj}\nPriority options: critical, high, med, low."
             msgs = trim_messages([HumanMessage(content=prompt)])
-            ai: AIMessage = llm.invoke(msgs)
+            ai: AIMessage = llm.chat(msgs)
             pr = ai.content.strip().lower()
         task["priority"] = pr
         task["status"] = "READY"
@@ -140,7 +140,7 @@ def prioritise(state: AgentState) -> Dict[str, Any]:
         if pr is None:
             prompt = f"Task: {obj}\nPriority options: critical, high, med, low."
             msgs = trim_messages([HumanMessage(content=prompt)])
-            ai: AIMessage = llm.invoke(msgs)
+            ai: AIMessage = llm.chat(msgs)
             pr = ai.content.strip().lower()
         results.append(
             {
@@ -177,7 +177,7 @@ def execute_tool(state: AgentState) -> Dict[str, Any]:
 
 def generate_response(state: AgentState) -> Dict[str, Any]:
     """Summarize tool output as final message."""
-    llm = ChatOllama()
+    llm = get_default_client()
     prompt = f"Task {state.get('current_task', {}).get('objective')}: {state.get('tool_output', '')}"
     guidelines = _load_guidelines()
     messages: List[BaseMessage] = []
@@ -188,7 +188,7 @@ def generate_response(state: AgentState) -> Dict[str, Any]:
     trimmed = trim_messages(messages)
     after = count_message_tokens(trimmed)
     meta_info = {"trimmed": True, "token_delta": before - after} if after < before else {}
-    ai: AIMessage = llm.invoke(trimmed, config={"metadata": meta_info})
+    ai: AIMessage = llm.chat(trimmed, metadata=meta_info)
     return {"messages": state.get("messages", []) + [ai], "current_task": None}
 
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import List, Dict, TypedDict
 
-from langchain_community.chat_models import ChatOllama
+from agent.llm_providers import get_default_client
 from langchain_google_community import GmailToolkit, CalendarToolkit
 from langfuse import Langfuse
 from langfuse.langchain import CallbackHandler
@@ -28,9 +28,9 @@ def build_tools() -> List:
 
 def build_agent() -> any:
     """Create the LangGraph agent with tools and save graph diagram."""
-    llm = ChatOllama()
+    llm = get_default_client()
     tools = build_tools()
-    agent = create_react_agent(llm, tools)
+    agent = create_react_agent(llm.chat_model if hasattr(llm, "chat_model") else llm, tools)
     agent.get_graph().draw_mermaid_png(output_file_path="tool_graph.png")
     return agent
 

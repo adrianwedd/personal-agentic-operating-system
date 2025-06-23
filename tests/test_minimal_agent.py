@@ -12,16 +12,16 @@ main = minimal_agent.main
 def test_ollama_step():
     state = {"messages": [HumanMessage(content="hi")]}
     fake_llm = MagicMock()
-    fake_llm.invoke.return_value = AIMessage(content="pong")
-    with patch("minimal_agent.ChatOllama", return_value=fake_llm):
+    fake_llm.chat.return_value = AIMessage(content="pong")
+    with patch("minimal_agent.get_default_client", return_value=fake_llm):
         new_state = ollama_step(state)
     assert new_state["messages"][-1].content == "pong"
 
 
 def test_main_print(capsys):
     fake_llm = MagicMock()
-    fake_llm.invoke.return_value = AIMessage(content="pong")
-    with patch("minimal_agent.ChatOllama", return_value=fake_llm), \
+    fake_llm.chat.return_value = AIMessage(content="pong")
+    with patch("minimal_agent.get_default_client", return_value=fake_llm), \
          patch("minimal_agent.Langfuse"), \
          patch("minimal_agent.CallbackHandler"):
         main("hi")

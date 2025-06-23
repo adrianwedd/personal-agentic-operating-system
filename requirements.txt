@@ -3,6 +3,9 @@ langchain-core
 langchain-text-splitters
 langgraph
 langchain-openai
+openai
+google-generativeai
+requests
 langchain-community
 langchain-google-community
 ollama
