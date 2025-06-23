@@ -29,8 +29,7 @@
 ```bash
 git clone https://github.com/adrianwedd/personal-agentic-operating-system.git
 cd personal-agentic-operating-system
-cp .env.example .env            # → edit secrets
-make dev                        # pulls images, installs deps
+./bootstrap.sh                  # 🚀 zero-click setup wizard
 python src/minimal_agent.py "Summarise my inbox"
 ```
 
