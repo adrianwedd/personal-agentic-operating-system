@@ -11,13 +11,17 @@ Interactive bootstrap wizard for the Personal Agentic Operating System.
     • First-run health check with intelligent log diagnostics
 """
 from __future__ import annotations
-import os, sys, re, json, platform, shutil, subprocess as sp
+import sys
+import platform
+import re
+import shutil
+import subprocess as sp
 from pathlib import Path
 from textwrap import dedent
 import psutil         # pulled in by requirements.txt
-from rich            import print
-from rich.prompt     import Prompt, Confirm
-from rich.progress   import Progress, SpinnerColumn, TextColumn
+from rich import print
+from rich.prompt import Prompt
+from rich.progress import Progress, SpinnerColumn, TextColumn
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ENV_FILE  = REPO_ROOT / ".env"

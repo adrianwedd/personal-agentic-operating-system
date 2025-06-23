@@ -2,7 +2,8 @@
 Tiny service-level health-checker for docker-compose stack.
 Used by onboard.py and CI smoke tests.
 """
-import time, json, subprocess as sp
+import time
+import subprocess as sp
 from typing import Tuple
 
 SERVICES = {
