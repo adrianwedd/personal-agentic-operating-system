@@ -1,0 +1,9 @@
+langchain
+langgraph
+langchain-openai
+langchain-community
+ollama
+qdrant-client
+langfuse
+fastapi
+uvicorn

@@ -1,0 +1,36 @@
+version: '3.9'
+services:
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+  qdrant:
+    image: qdrant/qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+  langfuse:
+    image: ghcr.io/langfuse/langfuse:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://langfuse:langfuse@langfuse_db:5432/langfuse
+      - NEXTAUTH_SECRET=supersecret
+      - NEXTAUTH_URL=http://localhost:3000
+    depends_on:
+      - langfuse_db
+  langfuse_db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=langfuse
+      - POSTGRES_USER=langfuse
+      - POSTGRES_PASSWORD=langfuse
+    volumes:
+      - langfuse_pgdata:/var/lib/postgresql/data
+volumes:
+  ollama_data:
+  qdrant_data:
+  langfuse_pgdata:
