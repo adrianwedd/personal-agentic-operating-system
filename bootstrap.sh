@@ -82,8 +82,10 @@ fi
 echo "\ud83d\udd27  Applying dev-friendly ClickHouse config..."
 mkdir -p .clickhouse
 cp docker/clickhouse/config.xml .clickhouse/config.xml
+cp clickhouse-mutation-pool.xml .clickhouse/mutation-pool.xml
 echo "\u26a0\ufe0f  Langfuse v3+ uses ClickHouse and requires manual DB config."
 echo "\u2139\ufe0f  ClickHouse config applied: .clickhouse/config.xml"
+echo "\u2139\ufe0f  Mutation pool override: .clickhouse/mutation-pool.xml"
 echo "   For pruning logs: bash scripts/prune_clickhouse_system_tables.sh"
 
 # 6️⃣  ARM warning for Langfuse < 2.58
