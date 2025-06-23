@@ -41,6 +41,7 @@ services:
       NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
     volumes:
       - ./data/neo4j:/data
+      - ./constraints.cypher:/docker-entrypoint-initdb.d/constraints.cypher:ro
     networks: ["agentnet"]
 
 networks:
