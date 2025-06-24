@@ -1,91 +1,119 @@
-services:
-  ollama:
-    image: ollama/ollama:0.2.0           # ← pin
-    ports:
-      - "11434:11434"
-    volumes:
-      - ./data/ollama:/root/.ollama
-    container_name: ollama
-  qdrant:
-    image: qdrant/qdrant:v1.9.0          # ← pin
-    container_name: qdrant
-    ports: ["6333"]                      # internal only
-    volumes:
-      - ./data/qdrant:/qdrant/storage
-    networks: ["agentnet"]
-  langfuse:
-    image: ${LANGFUSE_IMAGE:-ghcr.io/langfuse/langfuse:3.74.0}
-    container_name: langfuse
-    ports: ["3000"]                       # internal only
-    environment:
-      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      SALT: ${SALT}
-      CLICKHOUSE_MIGRATION_URL: ${CLICKHOUSE_MIGRATION_URL:-}
-      CLICKHOUSE_URL: ${CLICKHOUSE_URL:-}
-      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-clickhouse}
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-""}
-      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-langfuse}
-      CLICKHOUSE_CLUSTER_ENABLED: ${CLICKHOUSE_CLUSTER_ENABLED:-false}
-      # keys injected via .env
-    # If CLICKHOUSE_URL is empty, onboard.py patches LANGFUSE_IMAGE to 2.58.0-arm64 automatically.
-    networks: ["agentnet"]
-  postgres:
-    image: postgres:16.2-alpine           # ← pin
-    container_name: postgres
-    ports: ["5432"]                       # internal only
-    environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_DB: ${POSTGRES_DB}
-    volumes:
-      - ./data/postgres:/var/lib/postgresql/data
-    networks: ["agentnet"]
-  clickhouse:
-    image: clickhouse/clickhouse-server:24.2.3.70-alpine  # ← pin
-    container_name: clickhouse
-    ports:
-      - "8123"                      # HTTP internal
-      - "9000"                      # TCP internal
-    environment:
-      CLICKHOUSE_DB: default
-      CLICKHOUSE_USER: clickhouse
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
-    volumes:
-      - ./data/clickhouse:/var/lib/clickhouse
-      - ./logs/clickhouse:/var/log/clickhouse-server
-      - ./docker/clickhouse/config.xml:/etc/clickhouse-server/config.d/dev-overrides.xml:ro
-      - ./clickhouse-mutation-pool.xml:/etc/clickhouse-server/config.d/10-mutation-pool.xml:ro
-    networks: ["agentnet"]
-  neo4j:
-    image: neo4j:5.20
-    container_name: neo4j
-    ports: ["7687"]                       # internal only
-    environment:
-      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
-    volumes:
-      - ./data/neo4j:/data
-      - ./constraints.cypher:/docker-entrypoint-initdb.d/constraints.cypher:ro
-    networks: ["agentnet"]
-  trace-agent:
-    build:
-      context: .
-      dockerfile: trace_agent/Dockerfile
-    container_name: trace-agent
-    ports:
-      - "8000:8000"
-    networks: ["agentnet"]
-  graph-inspector:
-    build:
-      context: apps/graph-inspector
-      dockerfile: Dockerfile
-    container_name: graph-inspector
-    depends_on:
-      - trace-agent
-    ports:
-      - "5173:80"
-    networks: ["agentnet"]
+version: "3.8"  # validated with `docker compose config`
 
+###############################################################################
+#                global helpers (YAML anchors / aliases)                      #
+###############################################################################
+
+x-common: &common
+  restart: unless-stopped
+  env_file: [.env]          # loads POSTGRES_*, CLICKHOUSE_* … from repo-root .env
+  networks: [agentnet]
+
+###############################################################################
+#                                   SERVICES                                  #
+###############################################################################
+
+# ─────────────────── 1. LLM runtime ──────────────────────────────────────────
+ollama:
+  <<: *common
+  image: ollama/ollama:0.2.0
+  container_name: ollama
+  expose: ["11434"]
+  volumes:
+    - ./data/ollama:/root/.ollama
+
+# ─────────────────── 2. Vector store ────────────────────────────────────────
+qdrant:
+  <<: *common
+  image: qdrant/qdrant:v1.9.0
+  container_name: qdrant
+  expose: ["6333"]
+  volumes:
+    - ./data/qdrant:/qdrant/storage
+
+# ─────────────────── 3. Observability (Langfuse) ────────────────────────────
+langfuse:
+  <<: *common
+  image: ${LANGFUSE_IMAGE:-ghcr.io/langfuse/langfuse:3.74.0}
+  container_name: langfuse
+  expose: ["3000"]
+  depends_on:
+    - postgres
+    - clickhouse
+  environment:
+    DATABASE_URL: >-
+      postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
+
+# ─────────────────── 4. Relational DB (PostgreSQL) ──────────────────────────
+postgres:
+  <<: *common
+  image: postgres:16.2-alpine
+  container_name: postgres
+  expose: ["5432"]
+  volumes:
+    - ./data/postgres:/var/lib/postgresql/data
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+
+# ─────────────────── 5. Columnar DB (ClickHouse) ────────────────────────────
+clickhouse:
+  <<: *common
+  image: clickhouse/clickhouse-server:24.2.3.70-alpine
+  container_name: clickhouse
+  expose:
+    - "8123"
+    - "9000"
+  volumes:
+    - ./data/clickhouse:/var/lib/clickhouse
+    - ./logs/clickhouse:/var/log/clickhouse-server
+    - ./.clickhouse/config.xml:/etc/clickhouse-server/config.d/dev-overrides.xml:ro
+    - ./.clickhouse/mutation-pool.xml:/etc/clickhouse-server/config.d/10-mutation-pool.xml:ro
+  healthcheck:
+    test: ["CMD-SHELL", "curl -sf http://localhost:8123/ping || exit 1"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+  # ⊕ If your overrides reference ${CLICKHOUSE_USER/PASSWORD} macros,
+  #    add an explicit `environment:` block here.
+
+# ─────────────────── 6. Graph DB (Neo4j) ────────────────────────────────────
+neo4j:
+  <<: *common
+  image: neo4j:5.20
+  container_name: neo4j
+  expose: ["7687"]
+  volumes:
+    - ./data/neo4j:/data
+    - ./constraints.cypher:/docker-entrypoint-initdb.d/constraints.cypher:ro
+
+# ─────────────────── 7. Custom trace-agent API ──────────────────────────────
+trace-agent:
+  <<: *common
+  build:
+    context: .
+    dockerfile: trace_agent/Dockerfile
+  container_name: trace-agent
+  ports:
+    - "8000:8000"
+
+# ─────────────────── 8. Graph inspector UI ──────────────────────────────────
+graph-inspector:
+  <<: *common
+  build:
+    context: apps/graph-inspector
+    dockerfile: Dockerfile
+  container_name: graph-inspector
+  depends_on:
+    - trace-agent
+  ports:
+    - "5173:80"
+
+###############################################################################
+#                                   NETWORKS                                  #
+###############################################################################
 networks:
   agentnet:
     driver: bridge

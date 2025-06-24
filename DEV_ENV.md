@@ -81,10 +81,10 @@ Use VS Code Remote-Containers with `.devcontainer/devcontainer.json` if availabl
 
 ## ClickHouse for Langfuse v3+
 
-Langfuse v3 and newer relies on ClickHouse. A development tuned configuration
-is provided at `docker/clickhouse/config.xml` and keeps system logs compact while
-reducing background thread usage. Copy this file into your container (Docker
-Compose does this automatically) to apply the defaults.
+Langfuse v3 and newer relies on ClickHouse. A development‑tuned configuration
+is provided at `.clickhouse/config.xml` and keeps system logs compact while
+reducing background thread usage. Docker Compose mounts this file automatically
+if you ran `bootstrap.sh`.
 
 To enforce a 3‑day TTL on ClickHouse's system logs, run:
 

@@ -33,6 +33,7 @@ cd personal-agentic-operating-system
 python src/minimal_agent.py "Summarise my inbox"
 make task-api                   # optional REST interface
 cd apps/graph-inspector && yarn dev  # live LangGraph viewer
+bash scripts/check_db_connections.sh  # verify database access
 ```
 
 > **Tip:** first launch downloads base Ollama model (~3 GB). Subsequent runs are instant.

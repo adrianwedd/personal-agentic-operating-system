@@ -7,11 +7,14 @@ git clone https://github.com/adrianwedd/personal-agentic-operating-system.git
 cd personal-agentic-operating-system
 cp .env.example .env  # fill in secrets
 # Langfuse v3+ requires ClickHouse settings:
-# CLICKHOUSE_MIGRATION_URL=clickhouse://clickhouse:9000
+# CLICKHOUSE_MIGRATION_URL=clickhouse://clickhouse:<pw>@clickhouse:9000/langfuse?compression=lz4
 # CLICKHOUSE_URL=http://clickhouse:8123
 # CLICKHOUSE_USER=clickhouse
-# CLICKHOUSE_PASSWORD=""
+# CLICKHOUSE_PASSWORD=<pw>
 make dev
+
+# Optionally verify DB connectivity
+bash scripts/check_db_connections.sh
 ```
 
 Once services are running, try a simple task:
