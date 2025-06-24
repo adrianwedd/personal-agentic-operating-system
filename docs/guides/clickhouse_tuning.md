@@ -10,6 +10,15 @@ ClickHouse's system tables generate frequent background merges which can flood t
 
 These overrides lower the log level, limit background threads and pin mutation pool entries to 8 so ClickHouse 24 starts cleanly.
 
+### IPv6 health check errors
+
+Some hosts disable IPv6, causing the container to log `Address family for hostname not supported` and remain unhealthy. Add the following lines to `config.xml` to bind only to IPv4:
+
+```xml
+<listen_host>0.0.0.0</listen_host>
+<enable_ipv6>false</enable_ipv6>
+```
+
 ## Pruning helper
 
 Run `scripts/prune_clickhouse_system_tables.sh` occasionally (or via cron) to enforce the TTL and reclaim disk space. The script now accepts a custom number of days and a dry-run flag:
