@@ -50,6 +50,40 @@ bash scripts/check_db_connections.sh  # verify database access
 
 ---
 
+## 🧪 ClickHouse Bootstrapping
+
+ClickHouse requires a `langfuse` database. On first start the `clickhouse` service
+loads `init-clickhouse.sql` to create it automatically. If you need to recreate
+the volume from scratch:
+
+```bash
+docker volume rm personal-agentic-operating-system_clickhouse_data
+docker compose up -d clickhouse
+```
+
+To connect manually:
+
+```bash
+docker exec -it clickhouse clickhouse-client
+```
+
+Inside the SQL prompt:
+
+```
+CREATE DATABASE IF NOT EXISTS langfuse;
+```
+
+If the container health check fails with IPv6 errors, edit
+`docker/clickhouse/config.xml` and ensure it contains:
+
+```xml
+<listen_host>0.0.0.0</listen_host>
+<enable_ipv6>false</enable_ipv6>
+```
+Then restart the `clickhouse` service.
+
+---
+
 ## 🗺 System Architecture
 
 ```mermaid

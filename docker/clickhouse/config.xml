@@ -6,6 +6,9 @@
         <log>/var/log/clickhouse-server/clickhouse.log</log>
         <errorlog>/var/log/clickhouse-server/clickhouse.err.log</errorlog>
     </logger>
+    <!-- Bind only to IPv4 to avoid 'Address family not supported' errors -->
+    <listen_host>0.0.0.0</listen_host>
+    <enable_ipv6>false</enable_ipv6>
     <background_pool_size>4</background_pool_size>
     <background_move_pool_size>1</background_move_pool_size>
     <background_fetches_pool_size>2</background_fetches_pool_size>
