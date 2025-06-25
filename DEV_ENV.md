@@ -33,7 +33,7 @@ services:
     image: neo4j:5.20
     ports: ["7687:7687"]
     environment:
-      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
+      NEO4J_AUTH: ${NEO4J_AUTH}
     volumes:
       - ./data/neo4j:/data
 ```
@@ -47,7 +47,7 @@ Example `.env` values (no secrets):
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 OLLAMA_MODELS=/data/models
-NEO4J_PASSWORD=passw0rd
+NEO4J_AUTH=neo4j/passw0rd
 LANGFUSE_PUBLIC_KEY=changeme
 LANGFUSE_SECRET_KEY=changeme
 NEXTAUTH_SECRET=0123456789abcdef0123456789abcdef

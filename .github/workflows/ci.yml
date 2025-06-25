@@ -23,7 +23,7 @@ jobs:
       - run: |
           export NEO4J_URI=bolt://localhost:7687
           export NEO4J_URL=$NEO4J_URI
-          export NEO4J_PASSWORD=password
+          export NEO4J_AUTH=neo4j/password
           pytest -q --cov=agent --cov-fail-under=80
 
   smoke:
