@@ -71,6 +71,7 @@ clickhouse:
     - ./logs/clickhouse:/var/log/clickhouse-server
     - ./.clickhouse/config.xml:/etc/clickhouse-server/config.d/dev-overrides.xml:ro
     - ./.clickhouse/mutation-pool.xml:/etc/clickhouse-server/config.d/10-mutation-pool.xml:ro
+    - ./init-clickhouse.sql:/docker-entrypoint-initdb.d/init-clickhouse.sql:ro
   healthcheck:
     test: ["CMD-SHELL", "curl -sf http://localhost:8123/ping || exit 1"]
     interval: 10s
@@ -85,6 +86,8 @@ neo4j:
   image: neo4j:5.20
   container_name: neo4j
   expose: ["7687"]
+  environment:
+    NEO4J_AUTH: ${NEO4J_AUTH}
   volumes:
     - ./data/neo4j:/data
     - ./constraints.cypher:/docker-entrypoint-initdb.d/constraints.cypher:ro

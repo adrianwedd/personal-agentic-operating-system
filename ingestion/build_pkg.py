@@ -70,9 +70,16 @@ def _convert_filter(
 
 
 def _store_triples(triples: List[Tuple[str, str, str, str, str]]) -> None:
+    auth_str = os.environ.get("NEO4J_AUTH")
+    if auth_str:
+        user, pwd = auth_str.split("/", 1)
+    else:
+        user = "neo4j"
+        pwd = os.environ.get("NEO4J_PASSWORD", "password")
+
     driver = GraphDatabase.driver(
         os.environ.get("NEO4J_URL", "bolt://localhost:7687"),
-        auth=("neo4j", os.environ.get("NEO4J_PASSWORD", "password")),
+        auth=(user, pwd),
     )
     with driver.session() as session:
         session.execute_write(install_constraints)
