@@ -39,3 +39,24 @@
     - Model detection & pull
     - Stack health check + log diagnostics
     - CI smoke test via `make smoke`
+- id: improve_config_management
+  description: Enhance the bootstrap.sh script to check for and prompt for missing .env variables. Automate the ClickHouse configuration.
+  status: to_do
+- id: enhance_planner_sophistication
+  description: Improve the planner in agent/nodes.py to handle more complex, multi-step tasks with conditional logic.
+  status: to_do
+- id: expand_tool_integration
+  description: Integrate with a file storage service like Dropbox or Google Drive.
+  status: to_do
+- id: add_end_to_end_tests
+  description: Add more end-to-end tests to simulate user interactions from start to finish.
+  status: to_do
+- id: improve_error_handling
+  description: Add more specific error handling for API responses in the deepseek_client.py and gemini_client.py files.
+  status: to_do
+- id: enhance_graph_inspector
+  description: Enhance the graph-inspector to provide real-time updates on the agent's state and data flowing through the graph.
+  status: to_do
+- id: write_more_docstrings
+  description: Add more detailed docstrings to functions, especially in the agent/nodes.py file.
+  status: to_do
