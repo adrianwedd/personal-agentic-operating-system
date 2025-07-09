@@ -60,3 +60,39 @@
 - id: write_more_docstrings
   description: Add more detailed docstrings to functions, especially in the agent/nodes.py file.
   status: to_do
+
+# Documentation initiative inspired by Netflix
+- id: doc_product_framework
+  title: "Establish Documentation-as-a-Product Framework"
+  description: >
+    Treat our documentation as a first-class product by appointing a product owner,
+    defining a mission statement, creating success metrics, and drafting a roadmap.
+  status: to_do
+- id: doc_audience_personas
+  title: "Define Documentation Audience Personas"
+  description: Identify key developer personas and document their needs and pain points.
+  status: to_do
+- id: doc_portal
+  title: "Implement a Centralized Documentation Portal"
+  description: Deploy a searchable portal (e.g., Backstage or MkDocs) to serve as the single source of truth.
+  status: to_do
+- id: docs_as_code_workflow
+  title: "Implement Docs-as-Code Workflow"
+  description: Integrate documentation with version control and CI/CD for automatic publishing.
+  status: to_do
+- id: automate_api_docs
+  title: "Automate API Documentation Generation"
+  description: Generate and publish API reference docs from code annotations on each release.
+  status: to_do
+- id: content_style_guide
+  title: "Create Content Style Guide and Templates"
+  description: Write a style guide and Markdown templates emphasising the "why" behind technical decisions.
+  status: to_do
+- id: audit_migrate_docs
+  title: "Audit and Migrate Existing Documentation"
+  description: Inventory current docs, migrate valuable content to the portal, and archive the rest.
+  status: to_do
+- id: integrate_feedback_mechanisms
+  title: "Integrate Feedback Mechanisms into Portal"
+  description: Add widgets for rating, editing, and commenting on each page with notifications to Slack.
+  status: to_do
