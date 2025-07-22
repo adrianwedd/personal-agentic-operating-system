@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 import json
 from .event_broker import broker
+from agent.graph import graph_layout
 
 app = FastAPI()
 
@@ -19,3 +20,8 @@ async def graph_events() -> StreamingResponse:
             broker.unregister(queue)
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@app.get("/graph-layout")
+async def get_graph_layout() -> dict:
+    return graph_layout()
