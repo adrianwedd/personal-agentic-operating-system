@@ -47,7 +47,20 @@ else
     green "🐍 Python     : $PY"
 fi
 
-# 5️⃣  .env generation
+# 5️⃣  Node.js & Yarn (for graph inspector UI)
+if command -v node &> /dev/null; then
+    green "🟢 Node.js    : $(node --version)"
+else
+    yellow "⚠️  Node.js not found. Install from https://nodejs.org/"
+fi
+
+if command -v yarn &> /dev/null; then
+    green "🧶 Yarn       : $(yarn --version)"
+else
+    yellow "⚠️  Yarn not found. Install from https://yarnpkg.com/getting-started/install"
+fi
+
+# 6️⃣  .env generation
 if [[ ! -f .env ]]; then
     yellow "📄  Creating fresh .env from template…"
     cp .env.example .env
@@ -94,18 +107,18 @@ echo "\u2139\ufe0f  ClickHouse config applied: .clickhouse/config.xml"
 echo "\u2139\ufe0f  Mutation pool override: .clickhouse/mutation-pool.xml"
 echo "   For pruning logs: bash scripts/prune_clickhouse_system_tables.sh"
 
-# 6️⃣  ARM warning for Langfuse < 2.58
+# 7️⃣  ARM warning for Langfuse < 2.58
 if [[ "$ARCH" == "arm64" ]]; then
     dim "ℹ️  ARM Mac detected – using multi-arch Langfuse ≥ 2.58."
 fi
 
-# 7️⃣  Pull & launch containers
+# 8️⃣  Pull & launch containers
 bold ""
 bold "🚀  Launching Docker stack (this may take a few minutes on first run)…"
 docker compose pull --quiet
 docker compose up -d --wait
 
-# 8️⃣  Post-launch summary
+# 9️⃣  Post-launch summary
 bold ""
 green "🎉  All services requested. Quick status:"
 docker compose ps --format "table {{.Name}}\t{{.State}}\t{{.Ports}}"
