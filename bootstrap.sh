@@ -81,6 +81,9 @@ else
     fi
 fi
 
+# Warn about missing environment variables
+python3 scripts/check_env.py
+
 # 👷 Copy dev ClickHouse config
 echo "\ud83d\udd27  Applying dev-friendly ClickHouse config..."
 mkdir -p .clickhouse
