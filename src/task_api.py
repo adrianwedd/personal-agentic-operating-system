@@ -5,8 +5,14 @@ app = FastAPI()
 
 
 @app.get("/tasks")
-def list_tasks():
-    return tasks_db.list_tasks()
+def list_tasks(status: str | None = None, priority: str | None = None):
+    """Return tasks filtered by optional status and priority."""
+    tasks = tasks_db.list_tasks()
+    if status:
+        tasks = [t for t in tasks if t.get("status") == status]
+    if priority:
+        tasks = [t for t in tasks if t.get("priority") == priority]
+    return tasks
 
 
 @app.post("/tasks/{task_id}/approve")
