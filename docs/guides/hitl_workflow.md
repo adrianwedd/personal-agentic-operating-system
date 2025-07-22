@@ -10,3 +10,10 @@ $ python src/hitl_cli.py approve   # approve first pending task
 $ python src/hitl_cli.py reject    # reject first pending task
 ```
 Without arguments the command lists all queued items.
+
+To monitor the queue continuously, pass `--watch`:
+
+```bash
+$ python src/hitl_cli.py --watch  # poll for new tasks
+```
+The CLI prints a notice whenever a new task file appears. Use `Ctrl+C` to stop watching.

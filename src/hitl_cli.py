@@ -76,6 +76,34 @@ def list_queue() -> None:
         print(f"{task.get('task_id')}: {task.get('objective', 'no objective')}")
 
 
+def watch_queue(interval: int = 5, loops: int | None = None) -> None:
+    """Poll queue directory and notify when new tasks arrive."""
+    print(f"Watching {QUEUE_DIR} for new tasks. Press Ctrl+C to stop.")
+    seen: set[str] = set()
+    iterations = 0
+    try:
+        while True:
+            cleanup()
+            files = glob.glob(os.path.join(QUEUE_DIR, "*.json"))
+            for fp in files:
+                name = os.path.basename(fp)
+                if name in seen:
+                    continue
+                with open(fp) as fh:
+                    state = json.load(fh)
+                task = state.get("current_task", {})
+                print(
+                    f"New task {task.get('task_id')}: {task.get('objective', 'no objective')}"
+                )
+                seen.add(name)
+            iterations += 1
+            if loops is not None and iterations >= loops:
+                break
+            time.sleep(interval)
+    except KeyboardInterrupt:
+        pass
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Process HITL queue")
     parser.add_argument(
@@ -85,7 +113,16 @@ def main() -> None:
         default="list",
         help="Action to perform",
     )
+    parser.add_argument(
+        "--watch",
+        action="store_true",
+        help="Continuously poll the queue and notify on new tasks",
+    )
     args = parser.parse_args()
+
+    if args.watch:
+        watch_queue()
+        return
 
     if args.command == "list":
         list_queue()
