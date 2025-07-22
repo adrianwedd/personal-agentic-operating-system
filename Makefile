@@ -8,7 +8,8 @@ graph:
 onboard:
 	python scripts/onboard.py
 
-smoke:                 ## headless health-check (CI)
+smoke:			## headless health-check (CI)
+	python scripts/check_env.py
 	python scripts/healthcheck.py
 
 test: ruff
@@ -28,9 +29,9 @@ meta-agent:
 task-api:
 	uvicorn src.task_api:app --reload --port 8001
 
-docserve:  ## live docs
+docserve:	## live docs
 	mkdocs serve
 
-docbuild:  ## build static site
+docbuild:	## build static site
 	mkdocs build --strict
 .PHONY: docserve docbuild
