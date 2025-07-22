@@ -50,3 +50,17 @@ def test_approve_and_cancel(tmp_path, monkeypatch):
     assert resp.status_code == 200
     updated = tasks_db.get_task("2")
     assert updated["status"] == "CANCELLED"
+
+
+def test_list_tasks_filtered(tmp_path, monkeypatch):
+    setup_temp_db(tmp_path, monkeypatch)
+    tasks_db.add_task({"task_id": "1", "objective": "demo", "status": "NEW", "priority": "low"})
+    tasks_db.add_task({"task_id": "2", "objective": "demo2", "status": "DONE", "priority": "high"})
+    client = TestClient(api.app)
+    resp = client.get("/tasks", params={"status": "DONE"})
+    assert resp.status_code == 200
+    assert [t["task_id"] for t in resp.json()] == ["2"]
+
+    resp = client.get("/tasks", params={"priority": "low"})
+    assert resp.status_code == 200
+    assert [t["task_id"] for t in resp.json()] == ["1"]
