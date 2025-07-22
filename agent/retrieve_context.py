@@ -73,8 +73,9 @@ retriever = _build_retriever()
 # --- Qdrant Filtering -------------------------------------------------------
 
 
-def filter_qdrant_by_entities(query: str, entities: List[str]) -> List[Document]:
+def filter_qdrant_by_entities(query: str, entities: List[str]) -> tuple[List[Document], dict]:
     """Return documents matching the query and entity metadata."""
+    pkg_matches = len(entities)
     if entities:
         filter_ = {"must": [{"key": "entities", "match": {"any": entities}}]}
         docs = retriever.invoke(query, search_kwargs={"filter": filter_})
@@ -83,4 +84,8 @@ def filter_qdrant_by_entities(query: str, entities: List[str]) -> List[Document]
             docs = retriever.invoke(query)
     else:
         docs = retriever.invoke(query)
-    return docs
+    result_count = len(docs)
+    logging.info(
+        "filter_qdrant_by_entities: %d pkg matches -> %d docs", pkg_matches, result_count
+    )
+    return docs, {"pkg_match_count": pkg_matches, "doc_count": result_count}

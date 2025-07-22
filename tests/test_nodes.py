@@ -70,6 +70,7 @@ def test_retrieve_context_returns_metadata():
         out = nodes.retrieve_context(state)
     assert out["context_docs"] == ["hi"]
     assert out["graph_metadata"] == [{"doc_id": "1", "entity": "Alice"}]
+    assert out["retrieval_meta"] == {"pkg_match_count": 1, "doc_count": 1}
 
 
 def test_retrieve_context_filters_entities():
@@ -100,6 +101,7 @@ def test_retrieve_context_filters_entities():
         out = nodes.retrieve_context(state)
 
     assert out["context_docs"] == ["alice"]
+    assert out["retrieval_meta"] == {"pkg_match_count": 1, "doc_count": 1}
 
 
 def test_filter_qdrant_fallback():
@@ -112,11 +114,13 @@ def test_filter_qdrant_fallback():
     fake_retriever.invoke.side_effect = [[], [doc]]
 
     with patch.object(rc, "retriever", fake_retriever), patch.object(rc, "logging") as lg:
-        docs = rc.filter_qdrant_by_entities("hello", ["Alice"])
+        docs, meta = rc.filter_qdrant_by_entities("hello", ["Alice"])
 
     assert docs == [doc]
+    assert meta == {"pkg_match_count": 1, "doc_count": 1}
     assert fake_retriever.invoke.call_count == 2
     assert lg.warning.called
+    assert "falling back" in lg.warning.call_args[0][0]
 
 
 def test_prioritise_applies_rules():
