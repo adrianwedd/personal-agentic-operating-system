@@ -2,23 +2,18 @@ import React, { useEffect, useState } from 'react';
 import ReactFlow, { Node, Edge } from 'reactflow';
 import 'reactflow/dist/style.css';
 
-const initialNodes: Node[] = [
-  { id: 'plan', position: { x: 0, y: 0 }, data: { label: 'plan' } },
-  { id: 'prioritise', position: { x: 150, y: 0 }, data: { label: 'prioritise' } },
-  { id: 'retrieve', position: { x: 300, y: 0 }, data: { label: 'retrieve' } },
-  { id: 'execute', position: { x: 450, y: 0 }, data: { label: 'execute' } },
-  { id: 'respond', position: { x: 600, y: 0 }, data: { label: 'respond' } }
-];
-
-const edges: Edge[] = [
-  { id: 'e1', source: 'plan', target: 'prioritise' },
-  { id: 'e2', source: 'prioritise', target: 'retrieve' },
-  { id: 'e3', source: 'retrieve', target: 'execute' },
-  { id: 'e4', source: 'execute', target: 'respond' }
-];
-
 export default function App() {
-  const [nodes, setNodes] = useState<Node[]>(initialNodes);
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
+
+  useEffect(() => {
+    fetch('/graph-layout')
+      .then((res) => res.json())
+      .then((data) => {
+        setNodes(data.nodes);
+        setEdges(data.edges);
+      });
+  }, []);
 
   useEffect(() => {
     const es = new EventSource('/graph-events');

@@ -14,3 +14,13 @@ def test_build_graph(monkeypatch, tmp_path):
     assert "prioritise" in nodes
     edges = {(e.source, e.target) for e in compiled.get_graph().edges}
     assert ("execute", "pause") in edges
+
+
+def test_graph_layout():
+    from agent.graph import graph_layout
+
+    layout = graph_layout()
+    node_ids = {n["id"] for n in layout["nodes"]}
+    assert "plan" in node_ids
+    edge_pairs = {(e["source"], e["target"]) for e in layout["edges"]}
+    assert ("plan", "prioritise") in edge_pairs

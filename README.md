@@ -33,6 +33,7 @@ cd personal-agentic-operating-system
 make ingest                    # populate Qdrant & PKG
 python src/minimal_agent.py "Summarise my inbox"
 make task-api                   # optional REST interface
+uvicorn trace_agent.main:app --reload &  # start SSE backend
 cd apps/graph-inspector && yarn dev  # live LangGraph viewer
 bash scripts/check_db_connections.sh  # verify database access
 ```
@@ -45,7 +46,7 @@ bash scripts/check_db_connections.sh  # verify database access
 |----------|---------------|
 | **Langfuse dashboard** | <http://localhost:3000> |
 | **Docs site** | `make docserve` → <http://127.0.0.1:8000> |
-| **Graph inspector** | `cd apps/graph-inspector && yarn dev` → <http://localhost:5173> |
+| **Graph inspector** | `uvicorn trace_agent.main:app --reload` + `cd apps/graph-inspector && yarn dev` → <http://localhost:5173> |
 | **Run the agent** | `python src/minimal_agent.py "Hello"` |
 | **Health check** | `python scripts/healthcheck.py` |
 
@@ -125,7 +126,7 @@ Site-rendered docs: <https://adrianwedd.github.io/personal-agentic-operating-sys
 | `make graph`| Render Mermaid PNG of current LangGraph |
 | `make docserve`| Hot-reload MkDocs at <http://127.0.0.1:8000> |
 | `make task-api`| Launch FastAPI task API |
-| `yarn dev` (apps/graph-inspector)| Live graph inspector UI |
+| `yarn dev` (apps/graph-inspector)| Live graph inspector UI (requires `uvicorn trace_agent.main:app`) |
 
 ## 🔄 Meta-agent Schedule
 

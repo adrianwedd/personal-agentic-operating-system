@@ -76,6 +76,34 @@ def build_graph() -> any:
 compiled_graph = build_graph()
 
 
+def graph_layout() -> dict:
+    """Return nodes and edges suitable for ReactFlow."""
+    graph = compiled_graph.get_graph()
+    nodes = []
+    x = 0
+    for node in graph.nodes:
+        if node in {"__start__", "__end__"}:
+            continue
+        nodes.append({
+            "id": node,
+            "position": {"x": x, "y": 0},
+            "data": {"label": node},
+        })
+        x += 150
+
+    edges = []
+    for edge in graph.edges:
+        if edge.source in {"__start__", "__end__"} or edge.target in {"__start__", "__end__"}:
+            continue
+        edges.append({
+            "id": f"{edge.source}-{edge.target}",
+            "source": edge.source,
+            "target": edge.target,
+        })
+
+    return {"nodes": nodes, "edges": edges}
+
+
 def main(prompt: str) -> None:
     state: AgentState = {"messages": [HumanMessage(content=prompt)], "tasks": [], "context_docs": [], "current_task": None}
     langfuse = Langfuse()
