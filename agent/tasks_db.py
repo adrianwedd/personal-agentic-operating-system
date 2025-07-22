@@ -18,7 +18,13 @@ def init_db() -> None:
     os.makedirs("data", exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS tasks (task_id TEXT PRIMARY KEY, data TEXT)"
+        """
+        CREATE TABLE IF NOT EXISTS tasks (
+            task_id TEXT PRIMARY KEY,
+            data TEXT,
+            updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+        """
     )
     conn.commit()
     conn.close()
@@ -30,7 +36,7 @@ init_db()
 def add_task(task: Dict[str, Any]) -> None:
     conn = sqlite3.connect(DB_PATH)
     conn.execute(
-        "INSERT OR REPLACE INTO tasks (task_id, data) VALUES (?, ?)",
+        "INSERT OR REPLACE INTO tasks (task_id, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)",
         (task["task_id"], json.dumps(task)),
     )
     conn.commit()

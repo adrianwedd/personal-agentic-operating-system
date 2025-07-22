@@ -1,4 +1,6 @@
 import sqlite3
+import time
+from datetime import datetime
 from unittest.mock import MagicMock
 
 def test_tasks_db_crud(tmp_path, monkeypatch):
@@ -21,7 +23,13 @@ def test_tasks_db_crud(tmp_path, monkeypatch):
     def init_custom_db():
         conn = sqlite3.connect(db_path)
         conn.execute(
-            "CREATE TABLE tasks (task_id TEXT PRIMARY KEY, data TEXT, updated_at TEXT)"
+            """
+            CREATE TABLE tasks (
+                task_id TEXT PRIMARY KEY,
+                data TEXT,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+            """
         )
         conn.commit()
         conn.close()
@@ -33,10 +41,22 @@ def test_tasks_db_crud(tmp_path, monkeypatch):
     tasks_db.add_task(task)
     assert dummy_vs.added[-1][0] == ["do it"]
 
+    conn = sqlite3.connect(db_path)
+    ts1 = conn.execute("SELECT updated_at FROM tasks WHERE task_id='1'").fetchone()[0]
+    conn.close()
+    assert ts1 is not None
+
+    time.sleep(1)
+
     task["objective"] = "update"
     tasks_db.update_task(task)
     assert len(dummy_vs.added) == 2
     assert dummy_client.delete.call_count == 1
+
+    conn = sqlite3.connect(db_path)
+    ts2 = conn.execute("SELECT updated_at FROM tasks WHERE task_id='1'").fetchone()[0]
+    conn.close()
+    assert datetime.fromisoformat(ts2) > datetime.fromisoformat(ts1)
 
     tasks_db.delete_task("1")
     assert dummy_client.delete.call_count == 2
