@@ -28,9 +28,10 @@ class AgentState(TypedDict):
 def _build_retriever() -> any:
     """Create a Qdrant hybrid retriever."""
     client = QdrantClient(url=os.environ.get("QDRANT_URL", "http://localhost:6333"))
+    collection = os.environ.get("QDRANT_COLLECTION", "ingestion")
     vectorstore = Qdrant(
         client=client,
-        collection_name="ingestion",
+        collection_name=collection,
         embeddings=OllamaEmbeddings(),
     )
     return vectorstore.as_retriever()
