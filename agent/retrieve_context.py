@@ -58,10 +58,11 @@ def query_pkg(query: str) -> Tuple[List[str], List[dict]]:
 
 
 def _build_retriever() -> any:
+    collection = os.environ.get("QDRANT_COLLECTION", "ingestion")
     client = QdrantClient(url=os.environ.get("QDRANT_URL", "http://localhost:6333"))
     vectorstore = Qdrant(
         client=client,
-        collection_name="ingestion",
+        collection_name=collection,
         embeddings=OllamaEmbeddings(),
     )
     return vectorstore.as_retriever()

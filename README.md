@@ -31,6 +31,7 @@ git clone https://github.com/adrianwedd/personal-agentic-operating-system.git
 cd personal-agentic-operating-system
 ./bootstrap.sh                  # 🚀 zero-click setup wizard
 make ingest                    # populate Qdrant & PKG
+# export QDRANT_COLLECTION=my_collection to change the target
 python src/minimal_agent.py "Summarise my inbox"
 make task-api                   # optional REST interface
 uvicorn trace_agent.main:app --reload &  # start SSE backend

@@ -45,10 +45,11 @@ def ingest(gmail_query: str | None = None, directory: str | None = None) -> None
 
     embeddings = OllamaEmbeddings()
     client = QdrantClient(url=os.environ.get("QDRANT_URL", "http://localhost:6333"))
-    vectorstore = Qdrant(client=client, collection_name="ingestion", embeddings=embeddings)
+    collection = os.environ.get("QDRANT_COLLECTION", "ingestion")
+    vectorstore = Qdrant(client=client, collection_name=collection, embeddings=embeddings)
 
     ids = vectorstore.add_texts(texts, metadatas=metas)
-    print(f"Stored {len(ids)} chunks in Qdrant collection 'ingestion'")
+    print(f"Stored {len(ids)} chunks in Qdrant collection '{collection}'")
 
 
 if __name__ == "__main__":
