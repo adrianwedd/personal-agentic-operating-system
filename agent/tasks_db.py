@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import Qdrant
@@ -94,3 +94,28 @@ def list_tasks() -> list[dict]:
     rows = conn.execute("SELECT data FROM tasks").fetchall()
     conn.close()
     return [json.loads(r[0]) for r in rows]
+
+
+def search_tasks(query: str, k: int = 5) -> List[dict]:
+    """Return tasks ordered by vector similarity."""
+    client = QdrantClient(url="http://localhost:6333")
+    store = Qdrant(
+        client=client,
+        collection_name=COLLECTION,
+        embeddings=OllamaEmbeddings(),
+    )
+    results = store.similarity_search_with_score(query, k=k)
+    conn = sqlite3.connect(DB_PATH)
+    ordered: List[dict] = []
+    for doc, score in results:
+        task_id = str(doc.metadata.get("_id"))
+        row = conn.execute(
+            "SELECT data FROM tasks WHERE task_id=?", (task_id,)
+        ).fetchone()
+        if row:
+            task = json.loads(row[0])
+            task["_score"] = score
+            ordered.append(task)
+    conn.close()
+    ordered.sort(key=lambda t: t["_score"])
+    return ordered
