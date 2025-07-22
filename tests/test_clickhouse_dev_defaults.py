@@ -5,6 +5,20 @@ from pathlib import Path
 import pytest
 from clickhouse_driver import Client
 from testcontainers.core.container import DockerContainer
+import subprocess
+import shutil
+
+def _docker_available() -> bool:
+    exe = shutil.which("docker")
+    if not exe:
+        return False
+    try:
+        subprocess.run([exe, "info"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except Exception:
+        return False
+
+DOCKER_AVAILABLE = _docker_available()
 
 CLICKHOUSE_IMAGE = os.getenv("CLICKHOUSE_IMAGE", "clickhouse/clickhouse-server:23.10")
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -28,6 +42,7 @@ def _wait_for_clickhouse(host: str, port: int, *, timeout: int = 60):
 
 @pytest.mark.skipif(not CONFIG_FILE.exists(), reason="dev config not found")
 @pytest.mark.skipif(not PRUNE_SCRIPT.exists(), reason="prune script not found")
+@pytest.mark.skipif(not DOCKER_AVAILABLE, reason="docker not available")
 def test_dev_clickhouse_defaults():
     with DockerContainer(CLICKHOUSE_IMAGE) as ch:
         ch.with_volume_mapping(

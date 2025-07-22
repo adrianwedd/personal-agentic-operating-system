@@ -2,7 +2,7 @@ def test_build_graph(monkeypatch, tmp_path):
     import agent.graph as g
     monkeypatch.setattr(g, "HITL_DIR", tmp_path / "queue")
     # avoid writing image file
-    from langgraph.graph import Graph
+    from langgraph.graph import StateGraph as Graph
     monkeypatch.setattr(
         Graph,
         "draw_mermaid_png",
