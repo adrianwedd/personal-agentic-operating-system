@@ -3,6 +3,7 @@ from __future__ import annotations
 """Build the Personal Knowledge Graph from ingested documents."""
 import os
 from typing import List, Tuple
+from langchain_core.documents import Document
 
 from langchain_experimental.graph_transformers import LLMGraphTransformer
 from langchain_community.chat_models import ChatOllama
@@ -31,8 +32,23 @@ if __package__:
 
 
 
-def _load_docs(gmail_query: str | None, directory: str | None):
-    docs = []
+def _load_docs(gmail_query: str | None, directory: str | None) -> List[Document]:
+    """Load documents from Gmail and/or a local directory.
+
+    Parameters
+    ----------
+    gmail_query : str, optional
+        Search query used to pull messages from Gmail.
+    directory : str, optional
+        Path to a directory of text files to ingest.
+
+    Returns
+    -------
+    List[Document]
+        Combined list of loaded documents.
+    """
+
+    docs: List[Document] = []
     if gmail_query:
         docs.extend(load_gmail(gmail_query))
     if directory:
@@ -45,7 +61,22 @@ def _convert_filter(
     docs,
     handler: CallbackHandler,
 ) -> List[Tuple[str, str, str, str, str]]:
-    """Convert docs to triples and filter out unsupported types."""
+    """Convert documents to triples and remove unsupported entity types.
+
+    Parameters
+    ----------
+    transformer : LLMGraphTransformer
+        Transformer used to extract entities and relations from documents.
+    docs : Iterable[Document]
+        Documents to transform.
+    handler : CallbackHandler
+        Langfuse callback handler for instrumentation.
+
+    Returns
+    -------
+    List[Tuple[str, str, str, str, str]]
+        Filtered list of triples ``(source_id, source_type, relation, target_id, target_type)``.
+    """
     graph_docs = transformer.convert_to_graph_documents(
         docs, config={"callbacks": [handler]}
     )
@@ -70,6 +101,15 @@ def _convert_filter(
 
 
 def _store_triples(triples: List[Tuple[str, str, str, str, str]]) -> None:
+    """Persist triples in Neo4j.
+
+    Parameters
+    ----------
+    triples : List[Tuple[str, str, str, str, str]]
+        Output from :func:`_convert_filter` representing edges in the form
+        ``(source_id, source_type, relation, target_id, target_type)``.
+    """
+
     auth_str = os.environ.get("NEO4J_AUTH")
     if auth_str:
         user, pwd = auth_str.split("/", 1)
@@ -94,8 +134,21 @@ def _store_triples(triples: List[Tuple[str, str, str, str, str]]) -> None:
             )
 
 
-def build_pkg(gmail_query: str | None = None, directory: str | None = None) -> None:
-    """Extract graph triples from documents and store them."""
+def build_pkg(gmail_query: str | None = None, directory: str | None = None) -> int:
+    """Extract graph triples from documents and store them in Neo4j.
+
+    Parameters
+    ----------
+    gmail_query : str, optional
+        Gmail search query used to fetch messages for graph extraction.
+    directory : str, optional
+        Directory containing text files to include in the graph build.
+
+    Returns
+    -------
+    int
+        Number of triples successfully stored.
+    """
     docs = _load_docs(gmail_query, directory)
     if not docs:
         print("No documents loaded")
