@@ -46,10 +46,11 @@ def retrieve_context(state: AgentState) -> Dict[str, Any]:
     query = state["messages"][-1].content
     _, meta = query_pkg(query)
     entities = [m["entity"] for m in meta if "entity" in m]
-    docs = filter_qdrant_by_entities(query, entities)
+    docs, rmeta = filter_qdrant_by_entities(query, entities)
     return {
         "context_docs": [d.page_content for d in docs],
         "graph_metadata": meta,
+        "retrieval_meta": rmeta,
     }
 
 
