@@ -30,6 +30,7 @@
 git clone https://github.com/adrianwedd/personal-agentic-operating-system.git
 cd personal-agentic-operating-system
 ./bootstrap.sh                  # 🚀 zero-click setup wizard
+make ingest                    # populate Qdrant & PKG
 python src/minimal_agent.py "Summarise my inbox"
 make task-api                   # optional REST interface
 cd apps/graph-inspector && yarn dev  # live LangGraph viewer
