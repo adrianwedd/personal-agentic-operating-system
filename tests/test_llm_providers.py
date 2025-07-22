@@ -1,4 +1,5 @@
 import os, sys
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from unittest.mock import patch
@@ -18,6 +19,7 @@ from tests.mocks import (
     DummyEmbeddingModel,
     DummyGenerativeModel,
     DummyResponse,
+    ErrorResponse,
 )
 
 
@@ -32,8 +34,9 @@ def test_factory_selects_backend(monkeypatch):
 def test_openai_chat_invokes_sdk(monkeypatch):
     fake_model = DummyChatModel()
     monkeypatch.setenv("OPENAI_API_KEY", "x")
-    with patch("agent.llm_providers.openai_client.ChatOpenAI", return_value=fake_model), \
-         patch("agent.llm_providers.openai_client.OpenAIEmbeddings", DummyEmbeddingModel):
+    with patch(
+        "agent.llm_providers.openai_client.ChatOpenAI", return_value=fake_model
+    ), patch("agent.llm_providers.openai_client.OpenAIEmbeddings", DummyEmbeddingModel):
         client = OpenAIClient()
     out = client.chat([HumanMessage(content="hi")])
     assert out.content == "ok"
@@ -48,16 +51,26 @@ def test_openai_chat_invokes_sdk(monkeypatch):
 def test_ollama_client(monkeypatch):
     fake_model = DummyChatModel()
     fake_embed = DummyEmbeddingModel()
-    with patch("agent.llm_providers.ollama_client.ChatOllama", return_value=fake_model), \
-         patch("agent.llm_providers.ollama_client.OllamaEmbeddings", return_value=fake_embed):
+    with patch(
+        "agent.llm_providers.ollama_client.ChatOllama", return_value=fake_model
+    ), patch(
+        "agent.llm_providers.ollama_client.OllamaEmbeddings", return_value=fake_embed
+    ):
         client = OllamaClient()
     assert client.chat([HumanMessage(content="hi")]).content == "ok"
-    assert [m.content for m in client.stream_chat([HumanMessage(content="hi")])] == ["ok1", "ok2"]
+    assert [m.content for m in client.stream_chat([HumanMessage(content="hi")])] == [
+        "ok1",
+        "ok2",
+    ]
     assert client.embed(["t1"]) == [[1.0, 0.0, 0.0]]
 
 
 def test_gemini_client(monkeypatch):
-    dummy_module = type("M", (), {"GenerativeModel": DummyGenerativeModel, "configure": lambda **_: None})
+    dummy_module = type(
+        "M",
+        (),
+        {"GenerativeModel": DummyGenerativeModel, "configure": lambda **_: None},
+    )
     with patch("agent.llm_providers.gemini_client.genai", dummy_module):
         client = GeminiClient()
     assert client.chat([HumanMessage(content="hi")]).content == "ok"
@@ -82,8 +95,38 @@ def test_deepseek_client(monkeypatch):
     ):
         client = DeepSeekClient()
         assert client.chat([HumanMessage(content="hi")]).content == "ok"
-        assert [m.content for m in client.stream_chat([HumanMessage(content="hi")])] == [
+        assert [
+            m.content for m in client.stream_chat([HumanMessage(content="hi")])
+        ] == [
             "ok1",
             "ok2",
         ]
         assert client.embed(["t1"]) == [[1.0, 0.0, 0.0]]
+
+
+def test_deepseek_timeout(monkeypatch):
+    from agent.llm_providers.deepseek_client import DeepSeekError
+
+    def fake_post(*_, **__):
+        import requests
+
+        raise requests.Timeout()
+
+    with patch(
+        "agent.llm_providers.deepseek_client.requests.post", side_effect=fake_post
+    ):
+        client = DeepSeekClient()
+        with pytest.raises(DeepSeekError):
+            client.chat([HumanMessage(content="hi")])
+
+
+def test_deepseek_non_200(monkeypatch):
+    from agent.llm_providers.deepseek_client import DeepSeekError
+
+    with patch(
+        "agent.llm_providers.deepseek_client.requests.post",
+        return_value=ErrorResponse(status_code=500, text="fail"),
+    ):
+        client = DeepSeekClient()
+        with pytest.raises(DeepSeekError):
+            client.chat([HumanMessage(content="hi")])
