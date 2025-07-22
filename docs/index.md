@@ -12,4 +12,7 @@ Welcome! This site mirrors key docs from the repo.
 | **Run the agent** | `python src/minimal_agent.py "Hello"` |
 | **Health check** | `python scripts/healthcheck.py` |
 
+See [Guidelines and the meta-agent](guides/meta_agent.md) for details on the
+self-improvement loop.
+
 !include ../README.md

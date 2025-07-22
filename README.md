@@ -140,6 +140,16 @@ Run `scripts/run_meta_agent.py` daily so the system can refine
 
 Systemd users can create a timer that calls the same script once per day.
 
+View the latest guidelines with:
+
+```bash
+python scripts/run_meta_agent.py --show-last
+# or
+cat guidelines.txt
+```
+
+For more details see [guides/meta_agent.md](docs/guides/meta_agent.md).
+
 ---
 
 ## 🏗 Contributing
