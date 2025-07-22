@@ -4,6 +4,7 @@ This file provides the minimal, machine-readable facts needed to run and test th
 
 ## 1. Runtime Matrix
 - `PYTHON_VERSION=3.11`
+- Node.js 18+ and Yarn
 - Docker Compose v2 or newer
 - Works on CPU; optional CUDA acceleration for Ollama
 
