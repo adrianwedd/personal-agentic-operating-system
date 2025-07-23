@@ -9,7 +9,8 @@ from langchain_core.documents import Document
 
 
 def test_retrieve_context():
-    state = {"messages": [HumanMessage(content="foo")], "context_docs": []}
+    from rag_agent import AgentState
+    state = AgentState(messages=[HumanMessage(content="foo")], context_docs=[])
     fake_doc = Document(page_content="bar")
     fake_retriever = MagicMock()
     fake_retriever.invoke.return_value = [fake_doc]
@@ -19,7 +20,8 @@ def test_retrieve_context():
 
 
 def test_answer_step():
-    state = {"messages": [HumanMessage(content="hi")], "context_docs": ["ctx"]}
+    from rag_agent import AgentState
+    state = AgentState(messages=[HumanMessage(content="hi")], context_docs=["ctx"])
     fake_llm = MagicMock()
     fake_llm.chat.return_value = AIMessage(content="pong")
     with patch("rag_agent.get_default_client", return_value=fake_llm):

@@ -32,7 +32,7 @@ def human_approval(state: AgentState) -> dict:
         return {}
     path = os.path.join(HITL_DIR, f"{task['task_id']}.json")
     with open(path, "w") as fh:
-        json.dump(state, fh)
+        json.dump(state.to_dict(), fh)
     return {}
 
 
@@ -105,7 +105,12 @@ def graph_layout() -> dict:
 
 
 def main(prompt: str) -> None:
-    state: AgentState = {"messages": [HumanMessage(content=prompt)], "tasks": [], "context_docs": [], "current_task": None}
+    state = AgentState(
+        messages=[HumanMessage(content=prompt)],
+        tasks=[],
+        context_docs=[],
+        current_task=None,
+    )
     langfuse = Langfuse()
     handler = CallbackHandler(langfuse)
     result = compiled_graph.invoke(state, config={"callbacks": [handler]})
