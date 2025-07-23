@@ -3,7 +3,8 @@ from __future__ import annotations
 """Simple RAG agent with hybrid Qdrant retrieval."""
 
 import os
-from typing import List, TypedDict, Dict
+from typing import List, Dict
+from dataclasses import dataclass, field
 
 from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
 from agent.llm_providers import get_default_client
@@ -16,11 +17,21 @@ from langfuse import Langfuse
 from langgraph.graph import StateGraph, END
 
 
-class AgentState(TypedDict):
+@dataclass
+class AgentState:
     """State object for the RAG agent."""
 
-    messages: List[BaseMessage]
-    context_docs: List[str]
+    messages: List[BaseMessage] = field(default_factory=list)
+    context_docs: List[str] = field(default_factory=list)
+
+    def __getitem__(self, key: str):
+        return getattr(self, key)
+
+    def __setitem__(self, key: str, value):
+        setattr(self, key, value)
+
+    def get(self, key: str, default=None):
+        return getattr(self, key, default)
 
 
 # --- Retrieval -----------------------------------------------------------------
@@ -80,7 +91,7 @@ compiled_graph = build_graph()
 
 def main(question: str) -> None:
     """Run the agent in CLI mode."""
-    state: AgentState = {"messages": [HumanMessage(content=question)], "context_docs": []}
+    state = AgentState(messages=[HumanMessage(content=question)], context_docs=[])
     langfuse = Langfuse()
     handler = CallbackHandler(langfuse)
     result = compiled_graph.invoke(state, config={"callbacks": [handler]})

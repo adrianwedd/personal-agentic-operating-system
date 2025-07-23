@@ -26,7 +26,8 @@ def test_rag_to_tool_flow(capsys):
         assert vs.add_texts.called
 
     # Retrieve the document via rag_agent
-    state = {"messages": [HumanMessage(content="where is the sample?" )], "context_docs": []}
+    from rag_agent import AgentState
+    state = AgentState(messages=[HumanMessage(content="where is the sample?")], context_docs=[])
     fake_retriever = MagicMock()
     fake_retriever.invoke.return_value = [Document(page_content=doc_text)]
     with patch("rag_agent.retriever", fake_retriever):
@@ -36,7 +37,7 @@ def test_rag_to_tool_flow(capsys):
     fake_llm = MagicMock()
     fake_llm.chat.return_value = AIMessage(content="answer")
     with patch("rag_agent.get_default_client", return_value=fake_llm):
-        rag_agent.answer_step({**state, "context_docs": ctx["context_docs"]})
+        rag_agent.answer_step(AgentState(messages=state["messages"], context_docs=ctx["context_docs"]))
 
     # Execute a simple tool using tool_agent
     fake_agent = MagicMock()
